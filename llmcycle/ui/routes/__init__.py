@@ -6,6 +6,8 @@ from .routing import router as routing_router
 from .console import router as console_router
 from .proxy import router as proxy_router
 from .gateway import router as gateway_router
+from .anthropic import router as anthropic_router
+from .webhooks_api import router as webhooks_router
 
 router = APIRouter()
 router.include_router(auth_router)
@@ -15,3 +17,5 @@ router.include_router(routing_router)
 router.include_router(console_router)
 router.include_router(proxy_router)
 router.include_router(gateway_router)
+router.include_router(anthropic_router)
+router.include_router(webhooks_router)
