@@ -1,0 +1,77 @@
+<!-- ── CONSOLE ────────────────────────────────── -->
+    <div id="page-console" class="page">
+      <div class="section-hdr"><div class="section-title">Test Console</div></div>
+      <div class="console-layout">
+        <div>
+          <div class="card-wrap">
+            <div style="margin-bottom:12px;font-size:0.85rem;font-weight:600">Request</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Provider</label>
+                <select id="c-provider" onchange="updateModelOptions()" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                  <option value="">Select provider</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Model</label>
+                <input type="text" id="c-model-search" placeholder="🔍 Filter list..." style="width:100%; padding:6px 12px; margin-bottom:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:var(--text); font-size:0.8rem; outline:none;" oninput="filterConsoleModels()">
+                <select id="c-model" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                  <option value="">Select model</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Or Route via Group</label>
+              <select id="c-group" onchange="onConsoleGroupChange()" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                <option value="">— Use model or provider —</option>
+              </select>
+            </div>
+            <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Prompt</label>
+            <textarea id="c-prompt" placeholder="What is the capital of France?" rows="4"></textarea>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label style="font-size:0.78rem;color:var(--muted);margin-bottom:6px">Temperature</label>
+                  <span id="temp-val" style="font-size:0.78rem;color:var(--primary);font-family:var(--mono);font-weight:600">0.7</span>
+                </div>
+                <input type="range" id="c-temp" min="0.0" max="2.0" step="0.1" value="0.7" style="accent-color:var(--primary); width:100%; margin-top:6px;" oninput="document.getElementById('temp-val').textContent = this.value">
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label style="font-size:0.78rem;color:var(--muted);margin-bottom:6px">Max Tokens</label>
+                  <span id="tokens-val" style="font-size:0.78rem;color:var(--cyan);font-family:var(--mono);font-weight:600">512</span>
+                </div>
+                <input type="range" id="c-tokens" min="1" max="8192" step="1" value="512" style="accent-color:var(--cyan); width:100%; margin-top:6px;" oninput="document.getElementById('tokens-val').textContent = this.value">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Max Retries</label>
+                <input type="text" id="c-retries" value="2">
+              </div>
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Retry Delay (s)</label>
+                <input type="text" id="c-delay" value="1.0">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button class="btn btn-primary" onclick="testComplete()" id="run-btn">▶ Run</button>
+              <button class="btn btn-ghost" onclick="testStream()" id="stream-btn">📡 Stream</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card-wrap" style="height:calc(100% - 0px)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:0.85rem;font-weight:600">Output</span>
+              <button class="btn btn-sm btn-ghost" onclick="clearOutput()">Clear</button>
+            </div>
+            <div class="console-output" id="console-output">// Ready to test...\n</div>
+            <div class="output-meta" id="output-meta"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

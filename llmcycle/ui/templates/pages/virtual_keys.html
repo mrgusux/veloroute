@@ -1,0 +1,95 @@
+<section id="page-keys" class="page" data-ui aria-labelledby="vk-title">
+  <header class="vk-header">
+    <div>
+      <h1 id="vk-title">Virtual keys</h1>
+      <p>Scope client credentials by model and request rate. Key secrets appear only at creation or rotation.</p>
+    </div>
+    <div class="vk-header-actions">
+      <button class="vk-action" type="button" onclick="loadGatewayKeys()">Refresh</button>
+      <button class="vk-primary" type="button" onclick="openGatewayKeyCreate()">Create virtual key</button>
+    </div>
+  </header>
+
+  <div class="vk-stats" aria-label="Virtual key totals">
+    <div class="vk-stat"><div class="vk-stat-label">Active keys</div><div class="vk-stat-value" id="vk-stat-active">—</div></div>
+    <div class="vk-stat"><div class="vk-stat-label">Requests</div><div class="vk-stat-value" id="vk-stat-requests">—</div></div>
+    <div class="vk-stat"><div class="vk-stat-label">Tokens</div><div class="vk-stat-value" id="vk-stat-tokens">—</div></div>
+    <div class="vk-stat"><div class="vk-stat-label">Tracked spend</div><div class="vk-stat-value" id="vk-stat-spend">—</div></div>
+  </div>
+
+  <div class="vk-toolbar">
+    <div class="vk-tabs" role="tablist" aria-label="Filter virtual keys">
+      <button class="vk-tab" type="button" role="tab" aria-selected="true" data-vk-filter="all">All keys</button>
+      <button class="vk-tab" type="button" role="tab" aria-selected="false" data-vk-filter="active">Active</button>
+      <button class="vk-tab" type="button" role="tab" aria-selected="false" data-vk-filter="inactive">Inactive</button>
+    </div>
+    <input class="vk-search" id="vk-search" type="search" placeholder="Search names, IDs, models" aria-label="Search virtual keys" oninput="renderGatewayKeys()">
+  </div>
+
+  <div id="vk-list-error" class="vk-error" role="alert" hidden></div>
+  <div class="vk-table-wrap">
+    <table class="vk-table" aria-label="Virtual API keys">
+      <thead>
+        <tr>
+          <th scope="col">Key</th>
+          <th scope="col">Model access</th>
+          <th scope="col" class="num">Current window</th>
+          <th scope="col" class="num">Spend</th>
+          <th scope="col">State</th>
+          <th scope="col" class="num">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="vk-table-body">
+        <tr><td colspan="6" class="vk-empty">Loading virtual keys…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="vk-modal-overlay" id="vk-create-overlay" role="presentation" onclick="if(event.target===this)closeGatewayKeyModal('vk-create-overlay')">
+  <section class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-create-title">
+    <h2 id="vk-create-title">Create virtual key</h2>
+    <p>Choose a model scope and limits for this client. Leave a limit blank for no limit. An empty model scope permits every configured model.</p>
+    <form id="vk-create-form" onsubmit="createGatewayKey(event)">
+      <div class="vk-form-grid">
+        <div class="vk-field vk-field-full"><label for="vk-create-name">Key name</label><input id="vk-create-name" required maxlength="120" autocomplete="off" placeholder="e.g. staging worker"></div>
+        <div class="vk-field"><label for="vk-create-budget">Spend budget (USD)</label><input id="vk-create-budget" type="number" min="0" step="0.01" placeholder="No budget"></div>
+        <div class="vk-field"><label for="vk-create-rpm">Requests per minute</label><input id="vk-create-rpm" type="number" min="1" step="1" placeholder="Unlimited"></div>
+        <div class="vk-field"><label for="vk-create-tpm">Tokens per minute</label><input id="vk-create-tpm" type="number" min="1" step="1" placeholder="Unlimited"></div>
+        <div class="vk-field"><label for="vk-create-expiry">Expires in (hours)</label><input id="vk-create-expiry" type="number" min="0.01" step="0.01" placeholder="Never"></div>
+        <div class="vk-field vk-field-full"><label for="vk-create-models">Allowed models</label><textarea id="vk-create-models" placeholder="One model or glob pattern per line, e.g. openai/gpt-4o*"></textarea><div class="vk-hint">Use exact model IDs or patterns such as <code>openai/gpt-4o*</code>.</div></div>
+      </div>
+      <div class="vk-modal-actions"><button class="vk-action" type="button" onclick="closeGatewayKeyModal('vk-create-overlay')">Cancel</button><button class="vk-primary" type="submit">Create key</button></div>
+    </form>
+  </section>
+</div>
+
+<div class="vk-modal-overlay" id="vk-edit-overlay" role="presentation" onclick="if(event.target===this)closeGatewayKeyModal('vk-edit-overlay')">
+  <section class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-edit-title">
+    <h2 id="vk-edit-title">Edit virtual key</h2>
+    <p>Blank limits remove them. Clearing allowed models makes this key available to every configured model.</p>
+    <form id="vk-edit-form" onsubmit="saveGatewayKey(event)">
+      <input id="vk-edit-id" type="hidden">
+      <div class="vk-form-grid">
+        <div class="vk-field vk-field-full"><label for="vk-edit-name">Key name</label><input id="vk-edit-name" required maxlength="120"></div>
+        <div class="vk-field"><label for="vk-edit-budget">Spend budget (USD)</label><input id="vk-edit-budget" type="number" min="0" step="0.01"></div>
+        <div class="vk-field"><label for="vk-edit-rpm">Requests per minute</label><input id="vk-edit-rpm" type="number" min="1" step="1"></div>
+        <div class="vk-field"><label for="vk-edit-tpm">Tokens per minute</label><input id="vk-edit-tpm" type="number" min="1" step="1"></div>
+        <div class="vk-field"><label for="vk-edit-state">Key state</label><select id="vk-edit-state"><option value="true">Enabled</option><option value="false">Paused</option></select></div>
+        <div class="vk-field"><label for="vk-edit-expiry">Expires at</label><input id="vk-edit-expiry" type="datetime-local"></div>
+        <div class="vk-field vk-field-full"><label for="vk-edit-models">Allowed models</label><textarea id="vk-edit-models"></textarea></div>
+      </div>
+      <div class="vk-modal-actions"><button class="vk-action" type="button" onclick="closeGatewayKeyModal('vk-edit-overlay')">Cancel</button><button class="vk-primary" type="submit">Save changes</button></div>
+    </form>
+  </section>
+</div>
+
+<div class="vk-modal-overlay" id="vk-secret-overlay" role="presentation" onclick="if(event.target===this)closeGatewayKeySecret()">
+  <section class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-secret-title">
+    <h2 id="vk-secret-title">Save this key now</h2>
+    <p class="vk-secret-note">This is the only time the full secret is shown. Store it securely before closing this window.</p>
+    <code class="vk-secret-value" id="vk-secret-value"></code>
+    <div class="vk-modal-copy"><button class="vk-action" type="button" onclick="copyGatewayKey()">Copy key</button><span class="vk-hint" id="vk-copy-status" role="status"></span></div>
+    <div class="vk-modal-actions"><button class="vk-primary" type="button" onclick="closeGatewayKeySecret()">I saved the key</button></div>
+  </section>
+</div>

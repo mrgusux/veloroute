@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLMCycle Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07070f;
+  --bg2: #0d0d1a;
+  --bg3: #12122a;
+  --glass: rgba(255,255,255,0.04);
+  --glass2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --primary: #7c6fff;
+  --primary-glow: rgba(124,111,255,0.35);
+  --cyan: #00d4ff;
+  --green: #00ff9d;
+  --yellow: #ffd60a;
+  --red: #ff3b5c;
+  --orange: #ff6b35;
+  --text: #f0f0ff;
+  --muted: #6b6b8a;
+  --muted2: #9090b0;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(124,111,255,0.12), transparent),
+    radial-gradient(ellipse 50% 35% at 90% 80%, rgba(0,212,255,0.08), transparent),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(0,255,157,0.04), transparent);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── Login ─────────────────────────────────────── */
+#login-screen {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+.login-card {
+  width: 380px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(124,111,255,0.2);
+}
+.login-logo { font-size: 2.5rem; margin-bottom: 8px; }
+.login-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+.login-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; }
+
+input[type=text], input[type=password], input[type=email], select, textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.3);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+select option { background: var(--bg2); }
+textarea { resize: vertical; min-height: 70px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  font-family: inherit; font-size: 0.88rem; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary { background: linear-gradient(135deg, #7c6fff, #5b4dcc); color: white; width: 100%; justify-content: center; padding: 12px; }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 20px var(--primary-glow); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 8px; }
+.btn-ghost { background: var(--glass); border: 1px solid var(--border); color: var(--muted2); }
+.btn-ghost:hover { background: var(--glass2); color: var(--text); }
+.btn-success { background: rgba(0,255,157,0.15); border: 1px solid rgba(0,255,157,0.3); color: var(--green); }
+.btn-danger { background: rgba(255,59,92,0.15); border: 1px solid rgba(255,59,92,0.3); color: var(--red); }
+.btn-cyan { background: rgba(0,212,255,0.15); border: 1px solid rgba(0,212,255,0.3); color: var(--cyan); }
+
+#login-error { color: var(--red); font-size: 0.82rem; margin-bottom: 10px; display: none; }
+
+/* ── Shell ─────────────────────────────────────── */
+#app { display: none; min-height: 100vh; position: relative; z-index: 1; }
+
+/* ── Top bar ───────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 28px; height: 60px;
+  background: rgba(7,7,15,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-brand {
+  font-size: 1.2rem; font-weight: 800;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  flex-shrink: 0;
+}
+.topbar-nav { display: flex; gap: 4px; margin-left: 16px; }
+.nav-btn {
+  padding: 6px 14px; border-radius: 8px; border: none;
+  background: transparent; color: var(--muted2);
+  font-family: inherit; font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+}
+.nav-btn:hover { color: var(--text); background: var(--glass); }
+.nav-btn.active { color: var(--text); background: var(--glass2); border: 1px solid var(--border); }
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 4px var(--green); } 50% { box-shadow: 0 0 14px var(--green); } }
+.user-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px;
+  background: var(--glass); border: 1px solid var(--border);
+  font-size: 0.82rem; color: var(--muted2); cursor: pointer;
+}
+.user-chip:hover { color: var(--red); border-color: rgba(255,59,92,0.4); }
+
+/* ── Layout ─────────────────────────────────────── */
+.main-content { padding: 28px; max-width: 1400px; margin: 0 auto; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Stats row ─────────────────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+  display: flex; align-items: center; gap: 16px;
+  transition: all 0.25s;
+}
+.stat-card:hover { border-color: rgba(124,111,255,0.3); transform: translateY(-2px); }
+.stat-icon { font-size: 1.8rem; }
+.stat-value { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+.stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── Section ────────────────────────────────────── */
+.section-hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.section-title { font-size: 1.05rem; font-weight: 700; }
+.section-count { background: var(--primary); color: white; font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.section-actions { margin-left: auto; display: flex; gap: 8px; }
+
+/* ── Provider Cards ─────────────────────────────── */
+.providers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; }
+.provider-card {
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; position: relative; overflow: hidden;
+  transition: all 0.3s;
+}
+.provider-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+.provider-card:hover { border-color: rgba(124,111,255,0.35); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+.provider-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.provider-name { font-size: 1rem; font-weight: 700; }
+.provider-badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+.badge-active { background: rgba(0,255,157,0.15); color: var(--green); border: 1px solid rgba(0,255,157,0.25); }
+.badge-warning { background: rgba(255,214,10,0.15); color: var(--yellow); border: 1px solid rgba(255,214,10,0.25); }
+.badge-error { background: rgba(255,59,92,0.15); color: var(--red); border: 1px solid rgba(255,59,92,0.3); }
+.provider-url { font-family: var(--mono); font-size: 0.72rem; color: var(--primary); background: rgba(124,111,255,0.1); padding: 4px 8px; border-radius: 6px; margin-bottom: 12px; word-break: break-all; }
+.provider-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.meta-item { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 8px 10px; }
+.meta-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.meta-value { font-size: 1rem; font-weight: 700; margin-top: 2px; }
+.provider-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Key pills ──────────────────────────────────── */
+.key-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.key-pill {
+  font-family: var(--mono); font-size: 0.7rem; padding: 3px 8px;
+  border-radius: 20px; display: flex; align-items: center; gap: 4px;
+}
+.key-pill.active { background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.2); color: var(--green); }
+.key-pill.rate { background: rgba(255,214,10,0.1); border: 1px solid rgba(255,214,10,0.2); color: var(--yellow); }
+.key-pill.invalid { background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.2); color: var(--red); }
+
+/* ── Registry table ─────────────────────────────── */
+.registry-filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.search-input { max-width: 280px; margin-bottom: 0 !important; }
+.category-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+.cat-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--glass); color: var(--muted2); font-size: 0.78rem; cursor: pointer; transition: all 0.2s; }
+.cat-btn:hover, .cat-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+.registry-table { width: 100%; border-collapse: collapse; }
+.registry-table th { text-align: left; padding: 10px 14px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
+.registry-table td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; vertical-align: middle; }
+.registry-table tr:hover td { background: rgba(255,255,255,0.02); }
+.registry-table .mono { font-family: var(--mono); font-size: 0.78rem; color: var(--cyan); }
+
+/* ── Models panel ───────────────────────────────── */
+.models-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.model-tag {
+  font-family: var(--mono); font-size: 0.75rem; padding: 4px 10px;
+  border-radius: 6px; background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.15); color: var(--cyan); cursor: pointer;
+  transition: all 0.15s;
+}
+.model-tag:hover { background: rgba(0,212,255,0.18); transform: scale(1.02); }
+.model-tag.selected { background: rgba(0,212,255,0.25); border-color: var(--cyan); }
+
+/* ── Routing panel ──────────────────────────────── */
+.fallback-rule { display: flex; align-items: center; gap: 10px; background: var(--glass); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.fallback-from { color: #a78bfa; font-weight: 600; }
+.fallback-arrow { color: var(--muted); }
+.fallback-to { color: var(--cyan); font-family: var(--mono); font-size: 0.82rem; }
+
+/* ── Test Console ───────────────────────────────── */
+.console-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.console-output {
+  background: rgba(0,0,0,0.5); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px; min-height: 250px;
+  font-family: var(--mono); font-size: 0.82rem; line-height: 1.6;
+  color: var(--green); white-space: pre-wrap; overflow-y: auto;
+}
+.output-meta { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.output-tag { font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; }
+.output-tag.provider { background: rgba(124,111,255,0.2); color: #a78bfa; border: 1px solid rgba(124,111,255,0.3); }
+.output-tag.latency { background: rgba(0,255,157,0.1); color: var(--green); border: 1px solid rgba(0,255,157,0.2); }
+.output-tag.tokens { background: rgba(0,212,255,0.1); color: var(--cyan); border: 1px solid rgba(0,212,255,0.2); }
+
+/* ── Strategy pills ─────────────────────────────── */
+.strategy-btns { display: flex; gap: 8px; }
+.strat-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass); color: var(--muted2); font-size: 0.83rem; cursor: pointer; transition: all 0.2s; }
+.strat-btn.active { background: rgba(124,111,255,0.2); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+
+/* ── Modal ──────────────────────────────────────── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: 20px; padding: 32px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+.modal h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+.modal-footer { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+/* ── Latency bar ─────────────────────────────────── */
+.latency-bar-wrap { background: rgba(0,0,0,0.3); border-radius: 4px; height: 6px; width: 100%; }
+.latency-bar { height: 6px; border-radius: 4px; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 0.4s; }
+
+/* ── Toast ───────────────────────────────────────── */
+#toast { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast-item { padding: 12px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; border-left: 3px solid; animation: slideIn 0.2s ease; max-width: 320px; }
+.toast-success { background: rgba(0,255,157,0.12); border-color: var(--green); color: var(--green); }
+.toast-error { background: rgba(255,59,92,0.12); border-color: var(--red); color: var(--red); }
+.toast-info { background: rgba(0,212,255,0.1); border-color: var(--cyan); color: var(--cyan); }
+@keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── Misc ────────────────────────────────────────── */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+.empty-state { text-align: center; padding: 48px; color: var(--muted); }
+.empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-row { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.85rem; padding: 20px; }
+
+.card-wrap { background: var(--glass); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ─────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">♻️</div>
+    <div class="login-title">LLMCycle</div>
+    <div class="login-sub">Production LLM Router · Admin Dashboard</div>
+    <div id="login-error">Invalid credentials. Try again.</div>
+    <form id="login-form">
+      <input type="text" id="un" placeholder="Username" required>
+      <input type="password" id="pw" placeholder="Password" required>
+      <button type="submit" class="btn btn-primary">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── APP ───────────────────────────────────────── -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">♻️ LLMCycle</div>
+    <div class="topbar-nav">
+      <button class="nav-btn active" onclick="showPage('overview')">Overview</button>
+      <button class="nav-btn" onclick="showPage('registry')">Registry</button>
+      <button class="nav-btn" onclick="showPage('routing')">Routing</button>
+      <button class="nav-btn" onclick="showPage('console')">Test Console</button>
+    </div>
+    <div class="topbar-right">
+      <div class="status-dot" id="status-dot"></div>
+      <span style="font-size:0.78rem;color:var(--muted2)" id="status-label">Connected</span>
+      <button class="user-chip" onclick="logout()">👤 <span id="user-label">admin</span> · Sign out</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- ── OVERVIEW ───────────────────────────────── -->
+    <div id="page-overview" class="page active">
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-icon">🏢</div><div><div class="stat-value" id="s-providers">—</div><div class="stat-label">Active Providers</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🔑</div><div><div class="stat-value" id="s-keys">—</div><div class="stat-label">Active Keys</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🛣️</div><div><div class="stat-value" id="s-routes">—</div><div class="stat-label">Fallback Routes</div></div></div>
+        <div class="stat-card"><div class="stat-icon">⚡</div><div><div class="stat-value" id="s-strategy">—</div><div class="stat-label">Strategy</div></div></div>
+      </div>
+
+      <!-- Active Providers -->
+      <div class="section-hdr">
+        <div class="section-title">Active Providers</div>
+        <div class="section-count" id="providers-count">0</div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" onclick="refreshDashboard()">🔄 Refresh</button>
+          <button class="btn btn-sm btn-cyan" onclick="openAddModal()">+ Add Provider</button>
+        </div>
+      </div>
+      <div class="providers-grid" id="providers-grid">
+        <div class="loading-row"><div class="spinner"></div> Loading providers...</div>
+      </div>
+    </div>
+
+    <!-- ── REGISTRY ───────────────────────────────── -->
+    <div id="page-registry" class="page">
+      <div class="section-hdr">
+        <div class="section-title">Provider Registry</div>
+        <div class="section-count" id="registry-count">0</div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" id="export-btn" onclick="exportRegistry()">📥 Export JSON</button>
+        </div>
+      </div>
+      <div class="registry-filters">
+        <input type="text" class="search-input" id="reg-search" placeholder="🔍 Search providers..." oninput="filterRegistry()">
+        <div class="category-filter" id="cat-filters"></div>
+      </div>
+      <div class="card-wrap">
+        <table class="registry-table">
+          <thead><tr><th>Provider</th><th>Env Prefix</th><th>Base URL</th><th>Category</th><th>Action</th></tr></thead>
+          <tbody id="registry-tbody">
+            <tr><td colspan="5"><div class="loading-row"><div class="spinner"></div> Loading registry...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── ROUTING ────────────────────────────────── -->
+    <div id="page-routing" class="page">
+      <div class="section-hdr"><div class="section-title">Routing Strategy</div></div>
+      <div class="card-wrap">
+        <div style="margin-bottom:10px;font-size:0.85rem;color:var(--muted)">Select how requests are routed across providers:</div>
+        <div class="strategy-btns" id="strategy-btns">
+          <button class="strat-btn" data-v="priority" onclick="setStrategy('priority')">🏆 Priority</button>
+          <button class="strat-btn" data-v="round_robin" onclick="setStrategy('round_robin')">🔄 Round Robin</button>
+          <button class="strat-btn" data-v="lowest_latency" onclick="setStrategy('lowest_latency')">⚡ Lowest Latency</button>
+        </div>
+      </div>
+
+      <div class="section-hdr" style="margin-top:24px">
+        <div class="section-title">Fallback Routing</div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-cyan" onclick="openFallbackModal()">+ Add Rule</button>
+        </div>
+      </div>
+      <div class="card-wrap" id="fallback-container">
+        <div class="loading-row"><div class="spinner"></div> Loading routes...</div>
+      </div>
+
+      <div class="section-hdr" style="margin-top:24px"><div class="section-title">Latency Tracker</div></div>
+      <div class="card-wrap" id="latency-container">
+        <div class="loading-row"><div class="spinner"></div> Loading latencies...</div>
+      </div>
+    </div>
+
+    <!-- ── CONSOLE ────────────────────────────────── -->
+    <div id="page-console" class="page">
+      <div class="section-hdr"><div class="section-title">Test Console</div></div>
+      <div class="console-layout">
+        <div>
+          <div class="card-wrap">
+            <div style="margin-bottom:12px;font-size:0.85rem;font-weight:600">Request</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Group (optional)</label>
+                <select id="c-group" onchange="onConsoleGroupChange()" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                  <option value="">— Use model or provider —</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Provider / Model</label>
+                <div style="display:flex;gap:8px">
+                  <select id="c-provider" onchange="updateModelOptions()" style="flex:1;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                    <option value="">Select provider</option>
+                  </select>
+                  <select id="c-model" style="width:220px;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                    <option value="">Select model</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Prompt</label>
+            <textarea id="c-prompt" placeholder="What is the capital of France?" rows="4"></textarea>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Temperature</label>
+                <input type="text" id="c-temp" value="0.7">
+              </div>
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Max Tokens</label>
+                <input type="text" id="c-tokens" value="512">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Max Retries</label>
+                <input type="text" id="c-retries" value="2">
+              </div>
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Retry Delay (s)</label>
+                <input type="text" id="c-delay" value="1.0">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+              <div style="display:flex;align-items:center;gap:8px">
+                <label style="font-size:0.85rem;color:var(--muted);display:inline-block">Auto mode</label>
+                <input type="checkbox" id="c-auto" style="width:18px;height:18px;margin-left:6px">
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" onclick="testComplete()" id="run-btn">▶ Run</button>
+                <button class="btn btn-ghost" onclick="testStream()" id="stream-btn">📡 Stream</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card-wrap" style="height:calc(100% - 0px)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:0.85rem;font-weight:600">Output</span>
+              <button class="btn btn-sm btn-ghost" onclick="clearOutput()">Clear</button>
+            </div>
+            <div class="console-output" id="console-output">// Ready to test...\n</div>
+            <div class="output-meta" id="output-meta"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── ADD PROVIDER MODAL ─────────────────────────── -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h2>Add Provider</h2>
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Provider</label>
+    <select id="add-provider-select" onchange="onProviderSelect()">
+      <option value="">— Pick from registry or custom —</option>
+    </select>
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Custom Name <span style="color:var(--muted2)">(leave blank if using registry)</span></label>
+    <input type="text" id="add-custom-name" placeholder="myprovider">
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Base URL</label>
+    <input type="text" id="add-base-url" placeholder="https://api.provider.com/v1" style="font-family:var(--mono)">
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">API Keys <span style="color:var(--muted2)">(comma-separated)</span></label>
+    <textarea id="add-keys" placeholder="sk-key1, sk-key2, sk-key3" rows="3"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitAddProvider()">Add Provider</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD FALLBACK MODAL ─────────────────────────── -->
+<div class="modal-overlay" id="fallback-modal">
+  <div class="modal">
+    <h2>Add Fallback Rule</h2>
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Primary <span style="color:var(--muted2)">(provider or provider/model)</span></label>
+    <input type="text" id="fb-primary" placeholder="deepseek or deepseek/deepseek-chat" style="font-family:var(--mono)">
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Fallbacks <span style="color:var(--muted2)">(comma-separated, in priority order)</span></label>
+    <input type="text" id="fb-fallbacks" placeholder="groq, openai/gpt-4o-mini" style="font-family:var(--mono)">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('fallback-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitFallback()">Save Rule</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODELS MODAL ───────────────────────────────── -->
+<div class="modal-overlay" id="models-modal">
+  <div class="modal">
+    <h2 id="models-modal-title">Models</h2>
+    <div id="models-modal-content"><div class="loading-row"><div class="spinner"></div> Fetching models...</div></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('models-modal')">Close</button></div>
+  </div>
+</div>
+
+<!-- ── KEYS MODAL ─────────────────────────────────── -->
+<div class="modal-overlay" id="keys-modal">
+  <div class="modal">
+    <h2 id="keys-modal-title">Add Keys</h2>
+    <input type="hidden" id="keys-modal-provider">
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">New API Keys <span style="color:var(--muted2)">(comma-separated)</span></label>
+    <textarea id="keys-modal-input" placeholder="sk-new-key1, sk-new-key2" rows="3"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('keys-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitAddKeys()">Add Keys</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── STATE ───────────────────────────────────────────────
+let TOKEN = localStorage.getItem('llmc_token') || '';
+let registry = {};
+let dashData = {};
+let currentFallbacks = {};
+let currentUser = localStorage.getItem('llmc_user') || 'admin';
+
+// ── AUTH ────────────────────────────────────────────────
+document.getElementById('login-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const fd = new URLSearchParams();
+  fd.append('username', document.getElementById('un').value);
+  fd.append('password', document.getElementById('pw').value);
+  const r = await fetch('/api/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: fd });
+  if (r.ok) {
+    const d = await r.json();
+    TOKEN = d.access_token;
+    localStorage.setItem('llmc_token', TOKEN);
+    localStorage.setItem('llmc_user', document.getElementById('un').value);
+    currentUser = document.getElementById('un').value;
+    document.getElementById('user-label').textContent = currentUser;
+    showApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+};
+
+function logout() {
+  localStorage.removeItem('llmc_token');
+  TOKEN = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+async function apiFetch(url, opts = {}) {
+  const r = await fetch(url, { ...opts, headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  if (r.status === 401) { logout(); return null; }
+  return r;
+}
+
+// ── INIT ────────────────────────────────────────────────
+if (TOKEN) showApp();
+
+async function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-label').textContent = currentUser;
+  await Promise.all([loadRegistry(), refreshDashboard()]);
+}
+
+// ── PAGES ────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'routing') loadRouting();
+}
+
+// ── DASHBOARD ────────────────────────────────────────────
+async function refreshDashboard() {
+  const r = await apiFetch('/api/dashboard');
+  if (!r) return;
+  dashData = await r.json();
+
+  document.getElementById('s-providers').textContent = dashData.total_providers;
+  document.getElementById('s-keys').textContent = dashData.total_active_keys;
+  document.getElementById('s-routes').textContent = Object.keys(dashData.fallbacks || {}).length;
+  document.getElementById('s-strategy').textContent = (dashData.strategy || 'priority').replace('_',' ').toUpperCase();
+  document.getElementById('providers-count').textContent = dashData.total_providers;
+
+  currentFallbacks = dashData.fallbacks || {};
+  renderProviders(dashData.providers || []);
+}
+
+function renderProviders(providers) {
+  const grid = document.getElementById('providers-grid');
+  if (!providers.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🏜️</div><div>No providers loaded.</div><div style="font-size:0.8rem;margin-top:8px;color:var(--muted)">Add <code style="color:var(--cyan)">PROVIDER_API_KEYS=...</code> to your .env or click Add Provider</div></div>`;
+    return;
+  }
+  grid.innerHTML = providers.map(p => {
+    const { total, active, invalid, rate_limited } = p.keys;
+    const badge = active === 0 ? 'badge-error' : (invalid > 0 || rate_limited > 0) ? 'badge-warning' : 'badge-active';
+    const badgeTxt = active === 0 ? 'No Active Keys' : `${active}/${total} Active`;
+    const keyPills = (p.key_stats || []).map(k => {
+      const cls = k.status === 'active' ? 'active' : k.status === 'rate_limited' ? 'rate' : 'invalid';
+      return `<div class="key-pill ${cls}">⬤ ${k.hint}</div>`;
+    }).join('');
+    const latencyStr = p.latency_ms ? `⚡ ${p.latency_ms}ms` : '—';
+    return `
+    <div class="provider-card">
+      <div class="provider-header">
+        <div class="provider-name">${p.name}</div>
+        <div class="provider-badge ${badge}">${badgeTxt}</div>
+      </div>
+      <div class="provider-url">${p.base_url}</div>
+      <div class="provider-meta">
+        <div class="meta-item"><div class="meta-label">Keys</div><div class="meta-value">${total}</div></div>
+        <div class="meta-item"><div class="meta-label">Latency</div><div class="meta-value" style="font-size:0.9rem">${latencyStr}</div></div>
+      </div>
+      <div class="key-pills">${keyPills || '<span style="font-size:0.75rem;color:var(--muted)">No key details</span>'}</div>
+      <div class="divider"></div>
+      <div class="provider-actions">
+        <button class="btn btn-sm btn-ghost" onclick="showModels('${p.name.toLowerCase()}')">📋 Models</button>
+        <button class="btn btn-sm btn-ghost" onclick="openKeysModal('${p.name.toLowerCase()}')">🔑 Add Key</button>
+        <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="useInConsole('${p.name.toLowerCase()}')">▶ Test</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── REGISTRY ────────────────────────────────────────────
+const CATEGORIES = {
+  'Frontier / Cloud': ['OPENAI','AZURE','ANTHROPIC','GOOGLE','VERTEXAI','AWS_BEDROCK'],
+  'Fast Inference': ['GROQ','TOGETHER','FIREWORKS','ANYSCALE','PERPLEXITY','OPENROUTER','DEEPINFRA','FEATHERLESS','NOVITA','CHUTES','NSCALE','NEBIUS','HYPERBOLIC','LAMBDA','SAMBANOVA','CEREBRAS','FRIENDLIAI','GALADRIEL','GMI','PUBLICAI','COMETAPI','AIML'],
+  'Chinese / Asia': ['DEEPSEEK','QWEN','DASHSCOPE','MOONSHOT','MINIMAX','ZHIPU','BAIDU','VOLCANO','XIAOMI','ZAI'],
+  'Specialized': ['MISTRAL','CODESTRAL','COHERE','AI21','NLP_CLOUD','ALEPH_ALPHA','PREDIBASE','CLARIFAI','HUGGINGFACE','GRADIENT'],
+  'Local / Self-Hosted': ['OLLAMA','LM_STUDIO','VLLM','LLAMAFILE','TRITON','XINFERENCE','DOCKER_MODEL'],
+  'Enterprise': ['DATABRICKS','SAGEMAKER','SNOWFLAKE','WATSONX','SAP','OCI','CLOUDFLARE','HEROKU','OVH','SCALEWAY','DATAROBOT','NVIDIA','NVIDIA_NIM'],
+  'Dev / Other': ['GITHUB','VERCEL','XAI','BASETEN','REPLICATE','STABILITY','FAL','RECRAFT','RUNWAYML','BLACK_FOREST'],
+};
+
+function getCategoryFor(key) {
+  for (const [cat, keys] of Object.entries(CATEGORIES)) {
+    if (keys.includes(key)) return cat;
+  }
+  return 'Other';
+}
+
+let filteredRegistry = [];
+let activeCategory = 'All';
+
+async function loadRegistry() {
+  const r = await apiFetch('/api/registry');
+  if (!r) return;
+  registry = await r.json();
+  filteredRegistry = Object.entries(registry);
+  document.getElementById('registry-count').textContent = filteredRegistry.length;
+
+  // Build category filters
+  const cats = ['All', ...Object.keys(CATEGORIES), 'Other'];
+  document.getElementById('cat-filters').innerHTML = cats.map(c =>
+    `<button class="cat-btn${c==='All'?' active':''}" onclick="setCat('${c}',this)">${c}</button>`
+  ).join('');
+
+  // Populate add-modal select
+  const sel = document.getElementById('add-provider-select');
+  sel.innerHTML = '<option value="">— Pick from registry or custom —</option>' +
+    Object.entries(registry).map(([k,v]) => `<option value="${k}" data-url="${v}">${k} — ${v}</option>`).join('');
+
+  renderRegistry();
+}
+
+function setCat(cat, btn) {
+  activeCategory = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterRegistry();
+}
+
+function filterRegistry() {
+  const q = document.getElementById('reg-search').value.toLowerCase();
+  filteredRegistry = Object.entries(registry).filter(([k,v]) => {
+    const matchCat = activeCategory === 'All' || getCategoryFor(k) === activeCategory;
+    const matchQ = !q || k.toLowerCase().includes(q) || v.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  document.getElementById('registry-count').textContent = filteredRegistry.length;
+  renderRegistry();
+}
+
+function renderRegistry() {
+  const loaded = new Set((dashData.providers || []).map(p => p.name));
+  const tbody = document.getElementById('registry-tbody');
+  tbody.innerHTML = filteredRegistry.map(([k, url]) => {
+    const isLoaded = loaded.has(k.toLowerCase());
+    return `<tr>
+      <td><span style="font-weight:600">${k}</span>${isLoaded ? ' <span class="provider-badge badge-active" style="font-size:0.65rem;padding:1px 6px">loaded</span>' : ''}</td>
+      <td><code style="font-family:var(--mono);color:var(--yellow);font-size:0.78rem">${k}_API_KEYS</code></td>
+      <td><span class="mono">${url}</span></td>
+      <td style="color:var(--muted);font-size:0.78rem">${getCategoryFor(k)}</td>
+      <td>
+        ${isLoaded
+          ? `<button class="btn btn-sm btn-ghost" onclick="showModels('${k.toLowerCase()}')">Models</button>`
+          : `<button class="btn btn-sm btn-cyan" onclick="quickAdd('${k}','${url}')">+ Add</button>`
+        }
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">No results</td></tr>';
+}
+
+function exportRegistry() {
+  const blob = new Blob([JSON.stringify(registry, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'llmcycle-registry.json'; a.click();
+  toast('Registry exported!', 'success');
+}
+
+// ── ROUTING ───────────────────────────────────────────────
+async function loadRouting() {
+  const r = await apiFetch('/api/router');
+  if (!r) return;
+  const data = await r.json();
+  currentFallbacks = data.fallbacks || {};
+
+  // Strategy
+  document.querySelectorAll('.strat-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === data.strategy);
+  });
+
+  // Fallbacks
+  const fc = document.getElementById('fallback-container');
+  const fkeys = Object.keys(currentFallbacks);
+  fc.innerHTML = fkeys.length ? fkeys.map(primary => {
+    const tos = currentFallbacks[primary];
+    return `<div class="fallback-rule">
+      <span class="fallback-from">📌 ${primary}</span>
+      <span class="fallback-arrow">→</span>
+      <span class="fallback-to">${tos.join(' → ')}</span>
+      <button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="removeFallback('${primary}')">✕</button>
+    </div>`;
+  }).join('') : `<div style="color:var(--muted);font-size:0.85rem">No fallback rules configured. Add one above.</div>`;
+
+  // Latencies
+  const latencies = data.latencies || {};
+  const lc = document.getElementById('latency-container');
+  const lat = Object.entries(latencies);
+  lc.innerHTML = lat.length ? lat.sort((a,b) => a[1]-b[1]).map(([p, ms]) => {
+    const pct = Math.min(100, (ms / 2000) * 100);
+    const color = ms < 300 ? 'var(--green)' : ms < 800 ? 'var(--yellow)' : 'var(--red)';
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.85rem">
+        <span>${p}</span><span style="color:${color};font-family:var(--mono)">${ms.toFixed(0)}ms</span>
+      </div>
+      <div class="latency-bar-wrap"><div class="latency-bar" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  }).join('') : `<div style="color:var(--muted);font-size:0.85rem">No latency data yet. Run some requests via the Test Console.</div>`;
+}
+
+async function setStrategy(val) {
+  const r = await apiFetch(`/api/router/strategy?strategy=${val}`, { method: 'PUT' });
+  if (r && r.ok) {
+    document.querySelectorAll('.strat-btn').forEach(b => b.classList.toggle('active', b.dataset.v === val));
+    toast(`Strategy set to ${val.replace('_',' ')}`, 'success');
+    document.getElementById('s-strategy').textContent = val.replace('_',' ').toUpperCase();
+  }
+}
+
+function openFallbackModal() { document.getElementById('fallback-modal').classList.add('open'); }
+
+async function submitFallback() {
+  const primary = document.getElementById('fb-primary').value.trim();
+  const fbs = document.getElementById('fb-fallbacks').value.split(',').map(x => x.trim()).filter(Boolean);
+  if (!primary || !fbs.length) { toast('Fill in primary and fallbacks', 'error'); return; }
+  currentFallbacks[primary] = fbs;
+  const r = await apiFetch('/api/router/fallbacks', { method: 'POST', body: JSON.stringify({ fallbacks: currentFallbacks }) });
+  if (r && r.ok) { toast('Fallback rule saved!', 'success'); closeModal('fallback-modal'); loadRouting(); }
+}
+
+async function removeFallback(primary) {
+  delete currentFallbacks[primary];
+  const r = await apiFetch('/api/router/fallbacks', { method: 'POST', body: JSON.stringify({ fallbacks: currentFallbacks }) });
+  if (r && r.ok) { toast(`Removed fallback for ${primary}`, 'info'); loadRouting(); }
+}
+
+// ── CONSOLE ───────────────────────────────────────────────
+function clearOutput() {
+  document.getElementById('console-output').textContent = '// Ready...\n';
+  document.getElementById('output-meta').innerHTML = '';
+}
+
+async function testComplete() {
+  const model = document.getElementById('c-model').value.trim();
+  const prompt = document.getElementById('c-prompt').value.trim();
+  if (!model || !prompt) { toast('Enter model and prompt', 'error'); return; }
+  document.getElementById('console-output').textContent = '⏳ Completing...\n';
+  document.getElementById('output-meta').innerHTML = '';
+  const body = {
+    model, prompt,
+    temperature: parseFloat(document.getElementById('c-temp').value) || 0.7,
+    max_tokens: parseInt(document.getElementById('c-tokens').value) || 512,
+    max_retries: parseInt(document.getElementById('c-retries').value) || 2,
+    retry_delay: parseFloat(document.getElementById('c-delay').value) || 1.0,
+  };
+  const r = await apiFetch('/api/complete', { method: 'POST', body: JSON.stringify(body) });
+  if (!r) return;
+  if (r.ok) {
+    const d = await r.json();
+    document.getElementById('console-output').textContent = d.content;
+    document.getElementById('output-meta').innerHTML = `
+      <span class="output-tag provider">🏢 ${d.provider}</span>
+      <span class="output-tag latency">⚡ ${d.latency_ms}ms</span>
+      <span class="output-tag tokens">🔤 ${d.tokens.prompt}→${d.tokens.completion} tokens</span>`;
+    toast('Complete!', 'success');
+  } else {
+    const e = await r.json();
+    document.getElementById('console-output').textContent = `❌ Error: ${e.detail}`;
+    toast(e.detail, 'error');
+  }
+}
+
+async function testStream() {
+  const model = document.getElementById('c-model').value.trim();
+  const prompt = document.getElementById('c-prompt').value.trim();
+  if (!model || !prompt) { toast('Enter model and prompt', 'error'); return; }
+  const retries = document.getElementById('c-retries').value || 2;
+  const delay = document.getElementById('c-delay').value || 1.0;
+  const out = document.getElementById('console-output');
+  out.textContent = '📡 Streaming...\n';
+  document.getElementById('output-meta').innerHTML = '';
+  const url = `/api/stream?model=${encodeURIComponent(model)}&prompt=${encodeURIComponent(prompt)}&max_retries=${retries}&retry_delay=${delay}`;
+  const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  out.textContent = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const chunk = line.slice(6);
+        if (chunk === '[DONE]') { toast('Stream complete!', 'success'); break; }
+        if (chunk.startsWith('[ERROR]')) { out.textContent += '\n' + chunk; toast(chunk, 'error'); break; }
+        out.textContent += chunk;
+        out.scrollTop = out.scrollHeight;
+      }
+    }
+  }
+}
+
+function useInConsole(providerName) {
+  showPage('console');
+  document.querySelectorAll('.nav-btn').forEach((b,i) => { if(i===3) b.classList.add('active'); else b.classList.remove('active'); });
+  document.getElementById('c-model').value = `${providerName}/`;
+  document.getElementById('c-prompt').focus();
+}
+
+// ── MODALS ────────────────────────────────────────────────
+function openAddModal() { document.getElementById('add-modal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function onProviderSelect() {
+  const sel = document.getElementById('add-provider-select');
+  const opt = sel.selectedOptions[0];
+  if (opt && opt.dataset.url) {
+    document.getElementById('add-custom-name').value = '';
+    document.getElementById('add-base-url').value = opt.dataset.url;
+  }
+}
+
+function quickAdd(name, url) {
+  document.getElementById('add-provider-select').value = name;
+  document.getElementById('add-base-url').value = url;
+  document.getElementById('add-custom-name').value = '';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+async function submitAddProvider() {
+  const selVal = document.getElementById('add-provider-select').value;
+  const customName = document.getElementById('add-custom-name').value.trim();
+  const name = customName || selVal;
+  const base_url = document.getElementById('add-base-url').value.trim() || undefined;
+  const rawKeys = document.getElementById('add-keys').value;
+  const api_keys = rawKeys.split(',').map(k => k.trim()).filter(Boolean);
+  if (!name) { toast('Provider name required', 'error'); return; }
+  if (!api_keys.length) { toast('At least one API key required', 'error'); return; }
+  const body = { name, api_keys };
+  if (base_url) body.base_url = base_url;
+  const r = await apiFetch('/api/providers', { method: 'POST', body: JSON.stringify(body) });
+  if (r && r.ok) { toast(`${name} added!`, 'success'); closeModal('add-modal'); refreshDashboard(); }
+  else { const e = await r.json(); toast(e.detail, 'error'); }
+}
+
+async function showModels(provider) {
+  document.getElementById('models-modal-title').textContent = `${provider.toUpperCase()} Models`;
+  document.getElementById('models-modal-content').innerHTML = '<div class="loading-row"><div class="spinner"></div> Fetching...</div>';
+  document.getElementById('models-modal').classList.add('open');
+  const r = await apiFetch(`/api/providers/${provider}/models`);
+  if (!r) return;
+  const d = await r.json();
+  if (!d.models.length) {
+    document.getElementById('models-modal-content').innerHTML = '<div style="color:var(--muted)">No models returned (check API key).</div>';
+    return;
+  }
+  document.getElementById('models-modal-content').innerHTML = `
+    <div style="color:var(--muted);font-size:0.8rem;margin-bottom:12px">${d.count} models available. Click to use in console.</div>
+    <div class="models-grid">${d.models.map(m =>
+      `<div class="model-tag" onclick="selectModel('${provider}','${m}')">${m}</div>`
+    ).join('')}</div>`;
+}
+
+function selectModel(provider, model) {
+  document.getElementById('c-model').value = `${provider}/${model}`;
+  closeModal('models-modal');
+  showPage('console');
+  document.querySelectorAll('.nav-btn').forEach((b,i) => { if(i===3) b.classList.add('active'); else b.classList.remove('active'); });
+  toast(`Model set: ${provider}/${model}`, 'info');
+}
+
+function openKeysModal(provider) {
+  document.getElementById('keys-modal-title').textContent = `Add Keys to ${provider.toUpperCase()}`;
+  document.getElementById('keys-modal-provider').value = provider;
+  document.getElementById('keys-modal-input').value = '';
+  document.getElementById('keys-modal').classList.add('open');
+}
+
+async function submitAddKeys() {
+  const provider = document.getElementById('keys-modal-provider').value;
+  const keys = document.getElementById('keys-modal-input').value.split(',').map(k => k.trim()).filter(Boolean);
+  if (!keys.length) { toast('Enter at least one key', 'error'); return; }
+  const r = await apiFetch(`/api/providers/${provider}/keys`, { method: 'POST', body: JSON.stringify({ keys }) });
+  if (r && r.ok) { toast(`${keys.length} key(s) added to ${provider}`, 'success'); closeModal('keys-modal'); refreshDashboard(); }
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast-item toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── AUTO REFRESH ──────────────────────────────────────────
+setInterval(() => {
+  if (TOKEN && document.getElementById('page-overview').classList.contains('active')) refreshDashboard();
+}, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!-- ── OVERVIEW ───────────────────────────────── -->
+    <div id="page-overview" class="page active">
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-icon">🏢</div><div><div class="stat-value" id="s-providers">—</div><div class="stat-label">Active Providers</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🔑</div><div><div class="stat-value" id="s-keys">—</div><div class="stat-label">Active Keys</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🛡️</div><div><div class="stat-value" id="s-tripped-keys">0</div><div class="stat-label">Tripped Keys</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🛣️</div><div><div class="stat-value" id="s-routes">—</div><div class="stat-label">Fallback Routes</div></div></div>
+        <div class="stat-card"><div class="stat-icon">⚡</div><div><div class="stat-value" id="s-strategy">—</div><div class="stat-label">Strategy</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🗄️</div><div><div class="stat-value" id="s-storage">—</div><div class="stat-label">Storage</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🧩</div><div><div class="stat-value" id="s-groups">—</div><div class="stat-label">Routing Groups</div></div></div>
+      </div>
+
+      <!-- Active Providers -->
+      <div class="section-hdr">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-title">Active Providers</div>
+          <div class="section-count" id="providers-count">0</div>
+          <input type="text" id="overview-search" placeholder="🔍 Filter active providers..." style="max-width:180px; margin-bottom:0 !important; margin-left: 16px; font-size:0.8rem; padding:6px 12px;" class="search-input" oninput="filterOverviewProviders()">
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" id="ping-all-btn" onclick="pingAllProviders(this)" title="Probe latency and health for all configured providers">⚡ Ping All</button>
+          <button class="btn btn-sm btn-ghost" onclick="refreshDashboard()">🔄 Refresh</button>
+          <button class="btn btn-sm btn-cyan" onclick="openAddModal()">+ Add Provider</button>
+        </div>
+      </div>
+      <div id="env-detected-banner" style="display: none;"></div>
+      <div class="providers-grid" id="providers-grid">
+        <div class="loading-row"><div class="spinner"></div> Loading providers...</div>
+      </div>
+
+      <!-- Proxy Settings Section -->
+      <div class="section-hdr" style="margin-top: 36px;">
+        <div class="section-title">Proxy Configuration</div>
+      </div>
+      <div class="card-wrap" style="max-width: 680px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 0.85rem; color: var(--muted)">
+          Configure an egress HTTP/HTTPS proxy URL. All outgoing network requests to LLM providers (e.g. models fetching, completions, streams) will route through this proxy server.
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="proxy-url-input" placeholder="e.g. http://127.0.0.1:8080" style="margin-bottom: 0; font-family: var(--mono); flex: 1; min-width: 250px;">
+          <button class="btn btn-cyan" style="width: auto;" onclick="updateProxySettings()">Save Proxy</button>
+          <button class="btn btn-ghost" style="width: auto;" onclick="clearProxySettings()">Clear</button>
+        </div>
+        <div id="proxy-status-message" style="font-size: 0.78rem; font-family: var(--mono); color: var(--muted)">
+          Proxy is currently disabled.
+        </div>
+      </div>
+    </div>
+
+    

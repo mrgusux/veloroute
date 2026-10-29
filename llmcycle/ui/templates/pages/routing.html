@@ -1,0 +1,44 @@
+<!-- ── ROUTING ────────────────────────────────── -->
+    <div id="page-routing" class="page">
+      <div class="section-hdr"><div class="section-title">Routing Strategy</div></div>
+      <div class="card-wrap">
+        <div style="margin-bottom:10px;font-size:0.85rem;color:var(--muted)">Select how requests are routed across providers:</div>
+        <div class="strategy-btns" id="strategy-btns" style="display:flex; flex-wrap:wrap; gap:8px;">
+          <button class="strat-btn" data-v="priority" onclick="setStrategy('priority')">🏆 Priority</button>
+          <button class="strat-btn" data-v="round_robin" onclick="setStrategy('round_robin')">🔄 Round Robin</button>
+          <button class="strat-btn" data-v="lowest_latency" onclick="setStrategy('lowest_latency')">⚡ Lowest Latency</button>
+          <button class="strat-btn" data-v="least_busy" onclick="setStrategy('least_busy')">⚖️ Least Busy</button>
+          <button class="strat-btn" data-v="weighted" onclick="setStrategy('weighted')">📊 Weighted</button>
+          <button class="strat-btn" data-v="active_first" onclick="setStrategy('active_first')">🛡️ Active First</button>
+        </div>
+      </div>
+
+      <div class="section-hdr" style="margin-top:24px">
+        <div class="section-title">Universal Model Aliasing</div>
+        <input type="text" id="aliases-search" placeholder="🔍 Filter aliases..." style="max-width:180px; margin-bottom:0 !important; margin-left: 16px; font-size:0.8rem; padding:6px 12px;" class="search-input" oninput="filterAliases()">
+        <div class="section-actions">
+          <button class="btn btn-sm btn-cyan" onclick="openAliasModal()">+ Add Alias</button>
+        </div>
+      </div>
+      <div class="card-wrap" id="aliases-container">
+        <div class="loading-row"><div class="spinner"></div> Loading aliases...</div>
+      </div>
+
+      <div class="section-hdr" style="margin-top:24px">
+        <div class="section-title">Fallback Routing</div>
+        <input type="text" id="routing-search" placeholder="🔍 Filter rules..." style="max-width:180px; margin-bottom:0 !important; margin-left: 16px; font-size:0.8rem; padding:6px 12px;" class="search-input" oninput="filterRoutingRules()">
+        <div class="section-actions">
+          <button class="btn btn-sm btn-cyan" onclick="openFallbackModal()">+ Add Rule</button>
+        </div>
+      </div>
+      <div class="card-wrap" id="fallback-container">
+        <div class="loading-row"><div class="spinner"></div> Loading routes...</div>
+      </div>
+
+      <div class="section-hdr" style="margin-top:24px"><div class="section-title">Latency Tracker</div></div>
+      <div class="card-wrap" id="latency-container">
+        <div class="loading-row"><div class="spinner"></div> Loading latencies...</div>
+      </div>
+    </div>
+
+    

@@ -1,0 +1,7 @@
+.venv/
+reference_repos/
+__pycache__/
+*.pyc
+.env
+llmcycle.db
+attachments/

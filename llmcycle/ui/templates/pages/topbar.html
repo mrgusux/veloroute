@@ -1,0 +1,20 @@
+<!-- ── APP TOPBAR ───────────────────────────────────────── -->
+  <div class="topbar">
+    <div class="topbar-brand">♻️ LLMCycle</div>
+    <div class="topbar-nav">
+      <button id="nav-overview" class="nav-btn active" onclick="showPage('overview', this)">Overview</button>
+      <button id="nav-registry" class="nav-btn" onclick="showPage('registry', this)">Registry</button>
+      <button id="nav-routing" class="nav-btn" onclick="showPage('routing', this)">Routing</button>
+      <button id="nav-groups" class="nav-btn" onclick="showPage('groups', this)">Groups</button>
+      <button id="nav-keys" class="nav-btn" onclick="showPage('keys', this)">Virtual Keys</button>
+      <button id="nav-analytics" class="nav-btn" onclick="showPage('analytics', this)">Analytics</button>
+      <button id="nav-console" class="nav-btn" onclick="showPage('console', this)">Test Console</button>
+    </div>
+    <div class="topbar-right">
+      <div class="status-dot" id="status-dot"></div>
+      <span style="font-size:0.78rem;color:var(--muted2)" id="status-label">Connected</span>
+      <button class="user-chip" onclick="logout()">👤 <span id="user-label">admin</span> · Sign out</button>
+    </div>
+  </div>
+
+  

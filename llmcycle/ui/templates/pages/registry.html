@@ -1,0 +1,58 @@
+<!-- ── REGISTRY ───────────────────────────────── -->
+    <div id="page-registry" class="page">
+      <div class="section-hdr">
+        <div class="section-title" id="registry-title">Provider Registry</div>
+        <div class="section-count" id="registry-count">0</div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" id="export-btn" onclick="exportRegistry()">📥 Export JSON</button>
+        </div>
+      </div>
+
+      <!-- Registry Sub-tabs -->
+      <div class="strategy-btns" style="margin-bottom: 20px;">
+        <button class="strat-btn active" id="tab-reg-providers" onclick="switchRegistryTab('providers')">📚 Provider Registry</button>
+        <button class="strat-btn" id="tab-reg-models" onclick="switchRegistryTab('models')">🔥 Active Models & Features</button>
+      </div>
+
+      <div id="registry-providers-section">
+        <div class="registry-filters">
+          <input type="text" class="search-input" id="reg-search" placeholder="🔍 Search providers..." oninput="filterRegistry()">
+          <div class="category-filter" id="cat-filters"></div>
+        </div>
+        <div class="card-wrap">
+          <table class="registry-table">
+            <thead><tr><th>Provider</th><th>Env Prefix</th><th>Base URL</th><th>Category</th><th>Action</th></tr></thead>
+            <tbody id="registry-tbody">
+              <tr><td colspan="5"><div class="loading-row"><div class="spinner"></div> Loading registry...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="registry-models-section" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 16px;">
+          <div style="font-size: 0.85rem; color: var(--muted2)">
+            Active models across configured providers, including pricing estimates, context limits, and capability tags.
+          </div>
+          <input type="text" id="models-search" class="search-input" placeholder="🔍 Search models, providers..." style="max-width: 220px; margin-bottom: 0 !important; font-size: 0.8rem; padding: 6px 12px;" oninput="filterActiveModelsTable()">
+        </div>
+        <div class="card-wrap">
+          <table class="registry-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Provider</th>
+                <th>Context Limit</th>
+                <th>Pricing (Input / Output)</th>
+                <th>Capabilities</th>
+              </tr>
+            </thead>
+            <tbody id="active-models-tbody">
+              <tr><td colspan="5"><div class="loading-row"><div class="spinner"></div> Loading active model features...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    
