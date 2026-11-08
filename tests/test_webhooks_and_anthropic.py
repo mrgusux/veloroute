@@ -6,16 +6,24 @@ import unittest
 from unittest.mock import AsyncMock, patch
 from starlette.testclient import TestClient
 
-from llmcycle.core.webhooks import WebhookDispatcher, WebhookEvent, get_webhook_dispatcher
-from llmcycle.ui.app import app
-from llmcycle.ui.routes.deps import SESSION_TOKEN, llm_client
-from llmcycle.schema import CompletionResponse, StreamChunk
+from veloroute.core.webhooks import WebhookDispatcher, WebhookEvent, get_webhook_dispatcher
+from veloroute.ui.app import app
+from veloroute.ui.routes.deps import SESSION_TOKEN, llm_client
+from veloroute.schema import CompletionResponse, StreamChunk
 
 
 class TestWebhooksAndAnthropic(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.client = TestClient(app)
         self.auth_headers = {"Authorization": f"Bearer {SESSION_TOKEN}"}
+        llm_client.virtual_keys._keys.clear()
+        llm_client.virtual_keys._by_hash.clear()
+        llm_client.virtual_keys.set_enforced(False)
+
+    def tearDown(self):
+        llm_client.virtual_keys._keys.clear()
+        llm_client.virtual_keys._by_hash.clear()
+        llm_client.virtual_keys.set_enforced(False)
 
     def test_webhook_event_signature(self):
         dispatcher = WebhookDispatcher(url="https://example.com/webhook", secret="my_secret_key")

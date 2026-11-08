@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 
-from llmcycle.providers.openai_compatible import OpenAICompatibleProvider
+from veloroute.providers.openai_compatible import OpenAICompatibleProvider
 
 
 class TestOpenAICompatibleImageGeneration(unittest.IsolatedAsyncioTestCase):

@@ -1,0 +1,173 @@
+{% raw %}
+<div id="page-prompts" class="page">
+  <!-- Header -->
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.8rem;">📝</span>
+        <h1 style="font-size:1.5rem; font-weight:700; color:var(--text); letter-spacing:-0.5px;">VeloRoute Prompt Hub &amp; Playground</h1>
+        <span style="background:rgba(0,212,255,0.15); border:1px solid rgba(0,212,255,0.4); color:var(--cyan); font-size:0.75rem; font-weight:700; padding:2px 8px; border-radius:12px; text-transform:uppercase;">Versioned Templates</span>
+      </div>
+      <p style="color:var(--muted2); font-size:0.88rem; margin-top:6px; max-width:780px; line-height:1.5;">
+        Author, version, and execute prompt templates with variable interpolation (<code>{{variable}}</code>). Test variations live in the VeloRoute interactive playground (inspired by <strong>Portkey Prompt Hub</strong> &amp; <strong>Traceloop</strong>).
+      </p>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-sm btn-ghost" onclick="loadPrompts()">🔄 Refresh</button>
+      <button class="btn btn-sm btn-primary" onclick="openPromptModal()" style="width:auto; padding:8px 18px;">+ New Prompt Template</button>
+    </div>
+  </div>
+
+  <!-- Layout: 2 Columns (Templates List + Playground) -->
+  <div style="display:grid; grid-template-columns: 1fr 1.1fr; gap:22px; align-items:start;">
+    <!-- Left Column: Template Cards -->
+    <div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin:0;">Saved Templates</h3>
+        <input type="text" id="prompt-search-input" placeholder="🔍 Search prompts..." style="max-width:200px; margin-bottom:0; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 12px; font-size:0.8rem; color:#fff;" oninput="filterPrompts()">
+      </div>
+
+      <div id="prompts-list-container" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="loading-row"><div class="spinner"></div> Loading prompt templates...</div>
+      </div>
+    </div>
+
+    <!-- Right Column: Interactive Playground -->
+    <div class="card-wrap" style="background:linear-gradient(145deg, rgba(16,18,36,0.65) 0%, rgba(8,9,20,0.85) 100%); border:1px solid rgba(124,111,255,0.3); border-radius:16px; padding:22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.2rem;">🎮</span>
+          <h3 style="font-size:1.05rem; font-weight:700; color:var(--text); margin:0;">Template Playground</h3>
+        </div>
+        <span id="pg-selected-badge" style="font-size:0.75rem; color:var(--green); background:rgba(0,255,157,0.1); border:1px solid rgba(0,255,157,0.3); padding:2px 8px; border-radius:10px;">Select a template</span>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:6px;">Active Prompt Template</label>
+        <select id="pg-prompt-select" onchange="onPlaygroundPromptSelected(this.value)" style="width:100%; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:9px 12px; font-size:0.88rem; color:#fff;">
+          <option value="">-- Choose a template to test --</option>
+        </select>
+      </div>
+
+      <!-- Preview of Template -->
+      <div id="pg-template-preview" style="display:none; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; margin-bottom:16px;">
+        <div id="pg-sys-preview" style="font-size:0.78rem; color:#c4b5fd; margin-bottom:8px; font-family:var(--mono);"></div>
+        <div id="pg-user-preview" style="font-size:0.82rem; color:var(--text); font-family:var(--mono); white-space:pre-wrap;"></div>
+      </div>
+
+      <!-- Dynamic Variable Inputs -->
+      <div id="pg-variables-section" style="margin-bottom:16px; display:none;">
+        <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:8px;">Interpolate Variables ({{...}})</label>
+        <div id="pg-variables-container" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+
+      <!-- Model & Execution Controls -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div>
+          <label style="font-size:0.78rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">Execution Model</label>
+          <input type="text" id="pg-model-input" placeholder="e.g. mock/mock-fast or openai/gpt-4o" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:8px 12px; font-size:0.85rem; color:#fff; margin-bottom:0;">
+        </div>
+        <div>
+          <label style="font-size:0.78rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">Temperature</label>
+          <input type="number" id="pg-temp-input" min="0" max="2" step="0.1" value="0.7" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:8px 12px; font-size:0.85rem; color:#fff; margin-bottom:0;">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px;">
+        <button id="pg-audit-btn" class="btn btn-ghost" type="button" onclick="auditPlaygroundPrompt()" style="padding:9px; font-size:0.8rem; border-color:rgba(0,212,255,0.35); color:var(--cyan);">
+          🔍 Audit &amp; Score Prompt
+        </button>
+        <button id="pg-export-btn" class="btn btn-ghost" type="button" onclick="exportPlaygroundIdeRules()" style="padding:9px; font-size:0.8rem; border-color:rgba(192,132,252,0.35); color:#c084fc;">
+          📦 Export IDE Rules (AGENTS.md)
+        </button>
+      </div>
+
+      <button id="pg-run-btn" class="btn btn-primary" type="button" onclick="runPromptPlayground()" style="width:100%; padding:11px; font-weight:700;">
+        ⚡ Execute Prompt in Playground
+      </button>
+
+      <!-- Prompt Audit Score Box -->
+      <div id="pg-audit-result-box" style="display:none; margin-top:14px; background:rgba(0,0,0,0.55); border:1px solid rgba(0,212,255,0.3); border-radius:12px; padding:12px 14px; font-size:0.8rem;"></div>
+
+      <!-- Execution Output Box -->
+      <div id="pg-output-box" style="display:none; margin-top:20px; background:rgba(0,0,0,0.65); border:1px solid rgba(0,212,255,0.3); border-radius:12px; padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:0.75rem; background:rgba(0,212,255,0.15); color:var(--cyan); padding:2px 8px; border-radius:6px; font-family:var(--mono);" id="pg-out-model"></span>
+            <span style="font-size:0.75rem; background:rgba(0,255,157,0.15); color:var(--green); padding:2px 8px; border-radius:6px; font-family:var(--mono);" id="pg-out-latency"></span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:0.75rem; color:var(--muted2); font-family:var(--mono);" id="pg-out-tokens"></span>
+            <span id="pg-out-cached" style="font-size:0.7rem; background:rgba(124,111,255,0.2); color:#c4b5fd; padding:2px 6px; border-radius:4px; display:none;">Cached</span>
+          </div>
+        </div>
+
+        <pre id="pg-out-content" style="background:transparent; border:none; color:#f0f0ff; font-family:var(--mono); font-size:0.82rem; white-space:pre-wrap; line-height:1.55; margin:0; max-height:240px; overflow-y:auto;"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create / Edit Prompt Template -->
+<div class="modal-overlay" id="prompt-modal-overlay" onclick="if(event.target===this)closePromptModal()">
+  <div class="modal" style="width:min(660px, 95vw);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h2 style="margin:0; font-size:1.25rem; font-weight:700; color:#fff;" id="prompt-modal-title">New Prompt Template</h2>
+      <button type="button" class="btn btn-sm btn-ghost" onclick="closePromptModal()">&times;</button>
+    </div>
+
+    <form id="prompt-form" onsubmit="savePromptTemplate(event)">
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:12px;">
+        <div>
+          <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">Prompt Name *</label>
+          <input type="text" id="prompt-form-name" required placeholder="e.g. code_reviewer, data_analyst" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:9px 12px; font-size:0.85rem; color:#fff;">
+        </div>
+        <div>
+          <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">Version</label>
+          <input type="text" id="prompt-form-version" value="v1" placeholder="v1" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:9px 12px; font-size:0.85rem; color:#fff;">
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">Description</label>
+        <input type="text" id="prompt-form-desc" placeholder="Brief summary of purpose and inputs" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:9px 12px; font-size:0.85rem; color:#fff;">
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">System Prompt (Role Instructions, Optional)</label>
+        <textarea id="prompt-form-sys" placeholder="You are an expert in {{topic}}..." style="width:100%; min-height:60px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 12px; font-size:0.85rem; color:#fff; font-family:var(--mono);" oninput="previewPromptVariables()"></textarea>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">User Template Body * (Use {{var}} for variables)</label>
+        <textarea id="prompt-form-template" required placeholder="Review this {{language}} code:\n\n{{code}}" style="width:100%; min-height:100px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 12px; font-size:0.85rem; color:#fff; font-family:var(--mono);" oninput="previewPromptVariables()"></textarea>
+      </div>
+
+      <!-- Detected Variables Badge Row -->
+      <div style="margin-bottom:16px;">
+        <span style="font-size:0.75rem; color:var(--muted2); display:block; margin-bottom:4px;">Detected Variables:</span>
+        <div id="prompt-form-detected-vars" style="display:flex; flex-wrap:wrap; gap:6px;">
+          <span style="font-size:0.75rem; color:var(--muted); font-style:italic;">None</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:20px;">
+        <div>
+          <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">Preferred Default Model</label>
+          <input type="text" id="prompt-form-model" placeholder="e.g. mock/mock-fast or openai/gpt-4o" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:9px 12px; font-size:0.85rem; color:#fff;">
+        </div>
+        <div>
+          <label style="font-size:0.8rem; font-weight:600; color:var(--text); display:block; margin-bottom:4px;">Temperature</label>
+          <input type="number" id="prompt-form-temp" min="0" max="2" step="0.1" value="0.7" style="width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:9px 12px; font-size:0.85rem; color:#fff;">
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn btn-ghost" onclick="closePromptModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="width:auto; padding:10px 24px;">Save Prompt Template</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endraw %}

@@ -1,0 +1,409 @@
+<!-- ── ADD PROVIDER MODAL ─────────────────────────── -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h2>Add Provider</h2>
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Provider</label>
+    <select id="add-provider-select" onchange="onProviderSelect()">
+      <option value="">— Pick from registry or custom —</option>
+    </select>
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Custom Name <span style="color:var(--muted2)">(leave blank if using registry)</span></label>
+    <input type="text" id="add-custom-name" placeholder="myprovider">
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Base URL</label>
+    <input type="text" id="add-base-url" placeholder="https://api.provider.com/v1" style="font-family:var(--mono)">
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">API Keys <span style="color:var(--muted2)">(comma-separated)</span></label>
+    <textarea id="add-keys" placeholder="sk-key1, sk-key2, sk-key3" rows="3"></textarea>
+    <div style="margin-top: 10px; margin-bottom: 12px; border-top: 1px solid var(--border); padding-top: 10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label style="font-size:0.8rem;color:var(--text);font-weight:600;margin-bottom:0">Configured Models <span style="font-weight:normal;color:var(--muted)">(optional)</span></label>
+        <div style="display:flex; gap:4px;">
+          <button type="button" class="btn btn-sm btn-ghost" style="font-size:0.72rem; padding:2px 7px;" onclick="syncModelsForModal('add', 'all')" title="Auto-sync all models from provider website">⚡ Sync All</button>
+          <button type="button" class="btn btn-sm btn-ghost" style="font-size:0.72rem; padding:2px 7px; color:var(--green); border-color:rgba(0,255,157,0.3)" onclick="syncModelsForModal('add', 'free')" title="Sync only free models (e.g. :free, free tier)">🎁 Sync Free</button>
+          <button type="button" class="btn btn-sm btn-ghost" style="font-size:0.72rem; padding:2px 7px; color:var(--cyan); border-color:rgba(0,212,255,0.3)" onclick="syncModelsForModal('add', 'paid')" title="Sync paid / non-free models">💳 Sync Paid</button>
+          <button type="button" class="btn btn-sm btn-ghost" style="font-size:0.72rem; padding:2px 7px; color:#ef4444;" onclick="clearCustomModelsInModal('add')" title="Clear custom list">✕ Clear</button>
+        </div>
+      </div>
+      <div id="add-sync-status" style="font-size:0.75rem; color:var(--muted); margin-bottom:6px; min-height:16px;"></div>
+      <textarea id="add-models" placeholder="deepseek-chat, deepseek-reasoner (or leave empty to auto-sync dynamically)" rows="2" style="font-family:var(--mono); font-size:0.82rem"></textarea>
+      <div style="font-size:0.72rem; color:var(--muted)">Specify custom model IDs separated by commas or newlines. If empty, all models are auto-discovered dynamically.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitAddProvider()">Add Provider</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD FALLBACK MODAL ─────────────────────────── -->
+<div class="modal-overlay" id="fallback-modal">
+  <div class="modal">
+    <h2>Add Fallback Rule</h2>
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Select Primary Provider & Model</label>
+    <div style="display:flex; gap:8px; margin-bottom:12px; align-items:flex-end;">
+      <select id="fb-primary-provider" style="flex:1; margin-bottom:0;" onchange="onFallbackPrimaryProviderChange()">
+        <option value="">— Select Provider —</option>
+      </select>
+      <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+        <input type="text" id="fb-primary-model-search" placeholder="🔍 Filter models..." style="margin-bottom:0 !important; font-size:0.75rem; padding:6px 10px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:var(--text); outline:none;" oninput="filterFallbackPrimaryModels()">
+        <select id="fb-primary-model" style="width:100%; margin-bottom:0;" onchange="onFallbackPrimaryModelChange()">
+          <option value="">— Entire Provider —</option>
+        </select>
+      </div>
+    </div>
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Primary Rule Value</label>
+    <input type="text" id="fb-primary" placeholder="deepseek or deepseek/deepseek-chat" style="font-family:var(--mono); margin-bottom:16px;">
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Select Fallbacks to Add</label>
+    <div style="display:flex; gap:8px; margin-bottom:12px; align-items:flex-end;">
+      <select id="fb-fallback-provider" style="flex:1; margin-bottom:0;" onchange="onFallbackProviderChange()">
+        <option value="">— Select Provider —</option>
+      </select>
+      <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+        <input type="text" id="fb-fallback-model-search" placeholder="🔍 Filter models..." style="margin-bottom:0 !important; font-size:0.75rem; padding:6px 10px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:var(--text); outline:none;" oninput="filterFallbackModels()">
+        <select id="fb-fallback-model" style="width:100%; margin-bottom:0;">
+          <option value="">— Entire Provider —</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="addFallbackFromSelect()" style="width: auto; margin-bottom:0;">Add</button>
+    </div>
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Selected Fallbacks Pathway (one below another, scrollable)</label>
+    <input type="hidden" id="fb-fallbacks">
+    <div id="fb-fallbacks-list" class="selected-items-list">
+      <div style="color:var(--muted); font-size:0.8rem; text-align:center; padding:12px;">No fallbacks added yet. Use the select dropdowns above to add.</div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('fallback-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitFallback()">Save Rule</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODELS MODAL ───────────────────────────────── -->
+<div class="modal-overlay" id="models-modal">
+  <div class="modal">
+    <h2 id="models-modal-title">Models</h2>
+    <input type="text" id="models-modal-search" placeholder="🔍 Search models..." style="width:100%; padding:8px 14px; margin-bottom:12px; border-radius:10px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text); font-size:0.85rem; outline:none;" oninput="filterModelsModalList()">
+    <div id="models-modal-content" style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+      <div class="loading-row"><div class="spinner"></div> Fetching models...</div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('models-modal')">Close</button></div>
+  </div>
+</div>
+
+<!-- ── KEYS MODAL ─────────────────────────────────── -->
+<div class="modal-overlay" id="keys-modal">
+  <div class="modal">
+    <h2 id="keys-modal-title">Manage Keys</h2>
+    <input type="hidden" id="keys-modal-provider">
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Active Keys</label>
+    <div id="keys-modal-existing" style="margin-bottom:16px; max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+      <div style="font-size:0.8rem; color:var(--muted)">Loading keys...</div>
+    </div>
+
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Add New API Keys <span style="color:var(--muted2)">(comma-separated)</span></label>
+    <textarea id="keys-modal-input" placeholder="sk-new-key1, sk-new-key2" rows="3"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('keys-modal')">Close</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitAddKeys()">Add Keys</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DYNAMIC GROUP MODAL ─────────────────────────── -->
+<div class="modal-overlay" id="group-modal">
+  <div class="modal">
+    <h2 id="group-modal-title">Create / Edit Group</h2>
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Group Name</label>
+    <input type="text" id="group-name" placeholder="fast-fallback-group" style="font-family:var(--mono)">
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Select Provider & Model to Add</label>
+    <div style="display:flex; gap:8px; margin-bottom:12px; align-items:flex-end;">
+      <select id="group-provider-select" style="flex:1; margin-bottom:0;" onchange="onGroupProviderChange()">
+        <option value="">— Select Provider —</option>
+      </select>
+      <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+        <input type="text" id="group-model-search" placeholder="🔍 Filter models..." style="margin-bottom:0 !important; font-size:0.75rem; padding:6px 10px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:var(--text); outline:none;" oninput="filterGroupModels()">
+        <select id="group-model-select" style="width:100%; margin-bottom:0;">
+          <option value="">— Select Model —</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="addGroupModelFromSelect()" style="width: auto; margin-bottom:0;">Add</button>
+    </div>
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Selected Models Pathway (one below another, scrollable)</label>
+    <input type="hidden" id="group-models-input">
+    <div id="group-models-list" class="selected-items-list">
+      <div style="color:var(--muted); font-size:0.8rem; text-align:center; padding:12px;">No models added to this group yet. Use the select dropdowns above to add.</div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('group-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitGroup()">Save Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT PROVIDER MODAL ────────────────────────────────────── -->
+<div class="modal-overlay" id="edit-provider-modal">
+  <div class="modal">
+    <h2 id="edit-provider-title">Edit Provider</h2>
+    <input type="hidden" id="edit-provider-name">
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Base URL</label>
+    <input type="text" id="edit-provider-base-url" placeholder="https://api.provider.com/v1" style="font-family:var(--mono)">
+    
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Active Keys</label>
+    <div id="edit-provider-current-keys" style="margin-bottom:14px; max-height:120px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
+      <div style="font-size:0.8rem; color:var(--muted)">No keys registered</div>
+    </div>
+
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Replace API Keys <span style="color:var(--muted2)">(comma-separated; leave blank to keep current)</span></label>
+    <textarea id="edit-provider-keys" placeholder="sk-key1, sk-key2" rows="3"></textarea>
+
+    <div style="margin-top: 10px; margin-bottom: 12px; border-top: 1px solid var(--border); padding-top: 10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <label style="font-size:0.8rem;color:var(--text);font-weight:600;margin-bottom:0">Configured Models <span style="font-weight:normal;color:var(--muted)">(custom list)</span></label>
+        <div style="display:flex; gap:4px;">
+          <button type="button" class="btn btn-sm btn-ghost" style="font-size:0.72rem; padding:2px 7px;" onclick="syncModelsForModal('edit', 'all')" title="Auto-sync all models from provider website">⚡ Sync All</button>
+          <button type="button" class="btn btn-sm btn-ghost" style="font-size:0.72rem; padding:2px 7px; color:var(--green); border-color:rgba(0,255,157,0.3)" onclick="syncModelsForModal('edit', 'free')" title="Sync only free models (e.g. :free, free tier)">🎁 Sync Free</button>
+          <button type="button" class="btn btn-sm btn-ghost" style="font-size:0.72rem; padding:2px 7px; color:var(--cyan); border-color:rgba(0,212,255,0.3)" onclick="syncModelsForModal('edit', 'paid')" title="Sync paid / non-free models">💳 Sync Paid</button>
+          <button type="button" class="btn btn-sm btn-ghost" style="font-size:0.72rem; padding:2px 7px; color:#ef4444;" onclick="clearCustomModelsInModal('edit')" title="Clear custom list and restore full dynamic auto-discovery">✕ Clear</button>
+        </div>
+      </div>
+      <div id="edit-sync-status" style="font-size:0.75rem; color:var(--muted); margin-bottom:6px; min-height:16px;"></div>
+      <textarea id="edit-provider-models" placeholder="deepseek-chat, deepseek-reasoner (or leave empty for dynamic auto-discovery)" rows="2" style="font-family:var(--mono); font-size:0.82rem"></textarea>
+      <div style="font-size:0.72rem; color:var(--muted)">Saved models become the only models exposed for this provider. Clear to restore automatic dynamic discovery.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('edit-provider-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitEditProvider()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD ALIAS MODAL ─────────────────────────── -->
+<div class="modal-overlay" id="alias-modal">
+  <div class="modal">
+    <h2>Add Model Alias</h2>
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Alias Name (virtual model)</label>
+    <input type="text" id="alias-name" placeholder="smart-model or fast-llm" style="font-family:var(--mono)">
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Target Model / Provider Path</label>
+    <input type="text" id="alias-target" placeholder="openai/gpt-4o or groq/llama-3.3-70b" style="font-family:var(--mono)">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('alias-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitAlias()">Save Alias</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── CONNECT IDE / SDK MODAL ─────────────────────────── -->
+<div class="modal-overlay" id="connect-modal">
+  <div class="modal" style="max-width: 720px; max-height: 90vh; overflow-y: auto;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+      <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+        <span>🔌</span> Connect IDE, Agent or SDK
+      </h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('connect-modal')" style="font-size: 1.1rem; line-height: 1; padding: 2px 8px;">&times;</button>
+    </div>
+    <div style="font-size: 0.82rem; color: var(--muted); margin-bottom: 16px;">
+      VeloRoute exposes an OpenAI &amp; Anthropic compatible gateway on your local server. Select your target client below for 1-click configuration snippets.
+    </div>
+
+    <!-- Tabs Header -->
+    <div style="display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; overflow-x: auto;">
+      <button class="btn btn-sm connect-tab active" id="ctab-cursor" onclick="switchConnectTab('cursor')">Cursor / OpenCode</button>
+      <button class="btn btn-sm connect-tab btn-ghost" id="ctab-continue" onclick="switchConnectTab('continue')">VS Code Continue</button>
+      <button class="btn btn-sm connect-tab btn-ghost" id="ctab-python" onclick="switchConnectTab('python')">Python (OpenAI)</button>
+      <button class="btn btn-sm connect-tab btn-ghost" id="ctab-node" onclick="switchConnectTab('node')">Node / TS</button>
+      <button class="btn btn-sm connect-tab btn-ghost" id="ctab-curl" onclick="switchConnectTab('curl')">cURL</button>
+      <button class="btn btn-sm connect-tab btn-ghost" id="ctab-anthropic" onclick="switchConnectTab('anthropic')">Anthropic SDK</button>
+    </div>
+
+    <!-- Tab 1: Cursor / OpenCode -->
+    <div id="ccontent-cursor" class="connect-content">
+      <div style="font-size: 0.8rem; color: var(--text); margin-bottom: 8px;">
+        <strong>Cursor IDE / OpenCode Settings</strong>:<br>
+        Navigate to <code>Cursor Settings &gt; Models</code>. Under <strong>OpenAI API Key</strong>, enter your Virtual Key (or <code>sk-any</code> if auth disabled). Under <strong>Override OpenAI Base URL</strong>, enter:
+      </div>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <input type="text" id="cursor-base-url-input" readonly style="font-family: var(--mono); font-size: 0.85rem; flex: 1; margin: 0; background: rgba(0,0,0,0.5); color: var(--cyan);" value="http://127.0.0.1:8000/v1">
+        <button class="btn btn-cyan btn-sm" onclick="copyToClipboard(document.getElementById('cursor-base-url-input').value, 'Base URL copied!')">📋 Copy URL</button>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--muted); margin-bottom: 8px;">
+        💡 You can use any model configured in your VeloRoute Registry (e.g. <code>openai/gpt-4o</code>, <code>deepseek/deepseek-chat</code>, or aliases).
+      </div>
+    </div>
+
+    <!-- Tab 2: VS Code Continue -->
+    <div id="ccontent-continue" class="connect-content" style="display: none;">
+      <div style="font-size: 0.8rem; color: var(--text); margin-bottom: 8px;">
+        Add this model block to your <code>~/.continue/config.json</code>:
+      </div>
+      <pre id="code-snippet-continue" style="background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 0.78rem; color: #a5f3fc; overflow-x: auto; margin-bottom: 10px;"></pre>
+      <button class="btn btn-cyan btn-sm" onclick="copySnippet('code-snippet-continue')">📋 Copy JSON Config</button>
+    </div>
+
+    <!-- Tab 3: Python OpenAI -->
+    <div id="ccontent-python" class="connect-content" style="display: none;">
+      <div style="font-size: 0.8rem; color: var(--text); margin-bottom: 8px;">
+        Use standard <code>openai</code> Python package pointed to VeloRoute:
+      </div>
+      <pre id="code-snippet-python" style="background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 0.78rem; color: #a5f3fc; overflow-x: auto; margin-bottom: 10px;"></pre>
+      <button class="btn btn-cyan btn-sm" onclick="copySnippet('code-snippet-python')">📋 Copy Python Code</button>
+    </div>
+
+    <!-- Tab 4: Node / TypeScript -->
+    <div id="ccontent-node" class="connect-content" style="display: none;">
+      <div style="font-size: 0.8rem; color: var(--text); margin-bottom: 8px;">
+        Use official <code>openai</code> npm package in Node.js / TypeScript:
+      </div>
+      <pre id="code-snippet-node" style="background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 0.78rem; color: #a5f3fc; overflow-x: auto; margin-bottom: 10px;"></pre>
+      <button class="btn btn-cyan btn-sm" onclick="copySnippet('code-snippet-node')">📋 Copy TypeScript Code</button>
+    </div>
+
+    <!-- Tab 5: cURL -->
+    <div id="ccontent-curl" class="connect-content" style="display: none;">
+      <div style="font-size: 0.8rem; color: var(--text); margin-bottom: 8px;">
+        Direct CLI test via cURL:
+      </div>
+      <pre id="code-snippet-curl" style="background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 0.78rem; color: #a5f3fc; overflow-x: auto; margin-bottom: 10px;"></pre>
+      <button class="btn btn-cyan btn-sm" onclick="copySnippet('code-snippet-curl')">📋 Copy cURL Command</button>
+    </div>
+
+    <!-- Tab 6: Anthropic SDK -->
+    <div id="ccontent-anthropic" class="connect-content" style="display: none;">
+      <div style="font-size: 0.8rem; color: var(--text); margin-bottom: 8px;">
+        VeloRoute supports native Anthropic <code>/v1/messages</code> format!
+      </div>
+      <pre id="code-snippet-anthropic" style="background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 0.78rem; color: #a5f3fc; overflow-x: auto; margin-bottom: 10px;"></pre>
+      <button class="btn btn-cyan btn-sm" onclick="copySnippet('code-snippet-anthropic')">📋 Copy Anthropic SDK Code</button>
+    </div>
+
+    <div class="modal-footer" style="margin-top: 20px;">
+      <button class="btn btn-ghost" onclick="closeModal('connect-modal')">Close</button>
+      <button class="btn btn-primary" onclick="switchPage('keys'); closeModal('connect-modal');">Generate Virtual Key &rarr;</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── ADD TRANSFORM RULE MODAL ───────────────────────── -->
+<div class="modal-overlay" id="add-transform-modal">
+  <div class="modal" style="max-width: 580px;">
+    <h2>Add Transformation Rule</h2>
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Rule Name</label>
+    <input type="text" id="tr-name" placeholder="e.g. Rewrite Legacy GPT-3.5 or Redact Company Secrets">
+
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Rule Type</label>
+    <select id="tr-type" onchange="onTransformTypeChange()">
+      <option value="model_rewrite">Model Rewrite (Map incoming model to new target)</option>
+      <option value="response_redact">Response Content Redaction (Mask sensitive keywords)</option>
+      <option value="inject_header">Inject Request Header (Forward to upstream provider)</option>
+      <option value="strip_header">Strip Response Header (Remove fingerprinting header)</option>
+    </select>
+
+    <label id="tr-match-label" style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Match Pattern (glob or exact)</label>
+    <input type="text" id="tr-pattern" placeholder="e.g. gpt-3.5* or ProjectTitan or X-Custom-Header" style="font-family:var(--mono)">
+
+    <div id="tr-replacement-wrap">
+      <label id="tr-replace-label" style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Replacement Target</label>
+      <input type="text" id="tr-replacement" placeholder="e.g. openai/gpt-4o-mini or [CONFIDENTIAL]" style="font-family:var(--mono)">
+    </div>
+
+    <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:6px">Description (optional)</label>
+    <input type="text" id="tr-desc" placeholder="e.g. Enforces project codename masking across all models">
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-transform-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="submitAddTransform()">Save Rule</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── QUICKSTART & MIGRATION MODAL ───────────────────────── -->
+<div class="modal-overlay" id="quickstart-modal">
+  <div class="modal" style="max-width: 680px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h2 style="margin:0; display:flex; align-items:center; gap:8px;">⚡ Developer Quickstart &amp; Migration</h2>
+      <button class="btn btn-sm btn-ghost" onclick="closeModal('quickstart-modal')" style="font-size:1.1rem; line-height:1;">&times;</button>
+    </div>
+    <div style="font-size:0.82rem; color:var(--muted); margin-bottom:14px;">
+      Drop-in universal migration snippets inspired by 4SAPI (Repo 001) and Portkey (Repo 186). Replace only your base URL and virtual key to route all LLM traffic through VeloRoute:
+    </div>
+
+    <!-- SDK Selector Tabs -->
+    <div style="display:flex; gap:6px; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px; overflow-x:auto;">
+      <button class="btn btn-sm qs-tab-btn active" id="qs-tab-openai" onclick="switchQuickstartTab('openai')">🐍 OpenAI (Python)</button>
+      <button class="btn btn-sm qs-tab-btn btn-ghost" id="qs-tab-anthropic" onclick="switchQuickstartTab('anthropic')">🧡 Anthropic (Python)</button>
+      <button class="btn btn-sm qs-tab-btn btn-ghost" id="qs-tab-curl" onclick="switchQuickstartTab('curl')">💻 cURL</button>
+      <button class="btn btn-sm qs-tab-btn btn-ghost" id="qs-tab-claude" onclick="switchQuickstartTab('claude')">🎯 Claude Code CLI</button>
+    </div>
+
+    <!-- Code Block -->
+    <div style="position:relative; margin-bottom:14px;">
+      <pre id="qs-code-block" style="background:rgba(0,0,0,0.6); border:1px solid var(--border); border-radius:10px; padding:14px; font-family:var(--mono); font-size:0.8rem; color:#38bdf8; overflow-x:auto; min-height:160px; max-height:240px; white-space:pre;"></pre>
+      <button class="btn btn-sm btn-cyan" id="qs-copy-btn" onclick="copyQuickstartSnippet()" style="position:absolute; top:10px; right:10px;">📋 Copy Snippet</button>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--muted2); font-family:var(--mono);">
+      <span>Target Gateway: <span id="qs-host-display" style="color:var(--cyan);">http://localhost:8000</span></span>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('quickstart-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MCP CUSTOM TOOL REGISTRATION MODAL ─────────────────── -->
+<div class="modal-overlay" id="mcp-register-modal">
+  <div class="modal" style="max-width: 580px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h2 style="margin:0; display:flex; align-items:center; gap:8px;">⚡ Register Custom MCP Tool</h2>
+      <button class="btn btn-sm btn-ghost" onclick="closeModal('mcp-register-modal')" style="font-size:1.1rem; line-height:1;">&times;</button>
+    </div>
+    <p style="font-size:0.8rem; color:var(--muted); margin-bottom:14px;">
+      Register a custom Model Context Protocol (MCP) tool definition or remote HTTP tool endpoint. Remote URLs are strictly SSRF-validated before registration.
+    </p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+      <div>
+        <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:4px;">Tool Name *</label>
+        <input type="text" id="mcp-reg-name" placeholder="e.g. weather_lookup" style="font-family:var(--mono); margin-bottom:0;">
+      </div>
+      <div>
+        <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:4px;">Server / Namespace</label>
+        <input type="text" id="mcp-reg-server" value="custom" placeholder="e.g. custom or ops-mcp" style="font-family:var(--mono); margin-bottom:0;">
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:4px;">Description *</label>
+      <input type="text" id="mcp-reg-desc" placeholder="Describe what this tool does so LLMs know when to invoke it" style="margin-bottom:0;">
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:4px;">Remote HTTP Webhook Endpoint (Optional — blank for local mock/echo schema)</label>
+      <input type="url" id="mcp-reg-endpoint" placeholder="https://api.example.com/mcp/execute" style="font-family:var(--mono); margin-bottom:0;">
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:4px;">JSON Schema Parameters</label>
+      <textarea id="mcp-reg-schema" rows="5" style="font-family:var(--mono); font-size:0.8rem; margin-bottom:0;">{
+  "type": "object",
+  "properties": {
+    "query": { "type": "string", "description": "Input query parameter" }
+  },
+  "required": ["query"]
+}</textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('mcp-register-modal')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto;" onclick="submitMcpRegisterTool()">💾 Register Tool</button>
+    </div>
+  </div>
+</div>
+

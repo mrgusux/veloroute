@@ -1,0 +1,29 @@
+[
+  {
+    "id": "sec-strip-server",
+    "name": "Strip Server Header",
+    "rule_type": "strip_header",
+    "match_pattern": "server",
+    "replacement": "",
+    "enabled": true,
+    "description": "Prevent server fingerprinting to external clients"
+  },
+  {
+    "id": "sec-strip-openai-org",
+    "name": "Strip OpenAI Org Header",
+    "rule_type": "strip_header",
+    "match_pattern": "openai-organization",
+    "replacement": "",
+    "enabled": true,
+    "description": "Hide internal OpenAI organization IDs from end users"
+  },
+  {
+    "id": "sec-strip-upstream-ray",
+    "name": "Strip Cloudflare Ray ID",
+    "rule_type": "strip_header",
+    "match_pattern": "cf-ray",
+    "replacement": "",
+    "enabled": true,
+    "description": "Remove CDN tracking headers"
+  }
+]

@@ -1,0 +1,30 @@
+<!-- ── APP TOPBAR ───────────────────────────────────────── -->
+  <div class="topbar">
+    <div class="topbar-brand">⚡ VeloRoute <span style="background: rgba(124,111,255,0.18); color: #a78bfa; border: 1px solid rgba(124,111,255,0.35); font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; vertical-align: middle; letter-spacing: 0.5px; margin-left: 6px;">GATEWAY</span></div>
+    <div class="topbar-nav">
+      <button id="nav-overview" class="nav-btn active" onclick="showPage('overview', this)">Overview</button>
+      <button id="nav-registry" class="nav-btn" onclick="showPage('registry', this)">Registry</button>
+      <button id="nav-routing" class="nav-btn" onclick="showPage('routing', this)">Routing</button>
+      <button id="nav-groups" class="nav-btn" onclick="showPage('groups', this)">Groups</button>
+      <button id="nav-keys" class="nav-btn" onclick="showPage('keys', this)">Virtual Keys</button>
+      <button id="nav-guardrails" class="nav-btn" onclick="showPage('guardrails', this)">🛡️ Guardrails</button>
+      <button id="nav-cache" class="nav-btn" onclick="showPage('cache', this)">🧠 Semantic Cache</button>
+      <button id="nav-prompts" class="nav-btn" onclick="showPage('prompts', this)">📝 Prompt Hub</button>
+      <button id="nav-mcp" class="nav-btn" onclick="showPage('mcp', this)">⚡ MCP Gateway</button>
+      <button id="nav-analytics" class="nav-btn" onclick="showPage('analytics', this)">Analytics</button>
+      <button id="nav-console" class="nav-btn" onclick="showPage('console', this)">Test Console</button>
+    </div>
+    <div class="topbar-right">
+      <button id="btn-privacy-toggle" onclick="togglePrivacyMode()" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:4px 10px; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; gap:5px;" title="Toggle Zero-Retention Privacy Mode">
+        <span>🛡️ Privacy:</span> <span id="privacy-mode-status" style="color:var(--muted); font-weight:700;">OFF</span>
+      </button>
+      <button id="btn-quickstart-open" onclick="openQuickstartModal()" style="background:linear-gradient(135deg, #7c6fff, #00d4ff); border:none; color:#fff; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:700; cursor:pointer; box-shadow:0 0 10px rgba(124,111,255,0.35);">
+        ⚡ Quickstart
+      </button>
+      <div style="display:flex; align-items:center; gap:6px; background:rgba(0,255,157,0.08); border:1px solid rgba(0,255,157,0.25); border-radius:8px; padding:3px 10px;">
+        <div class="status-dot" id="status-dot"></div>
+        <span style="font-size:0.75rem; font-weight:600; color:var(--green)" id="status-label">Connected</span>
+      </div>
+      <button class="user-chip" onclick="logout()">👤 <span id="user-label">admin</span> <span id="user-role-badge" style="font-size:0.65rem; background:rgba(0,212,255,0.18); color:var(--cyan); padding:1px 5px; border-radius:4px; margin-left:4px; text-transform:uppercase; font-weight:700;">ADMIN</span> · Sign out</button>
+    </div>
+  </div>

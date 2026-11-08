@@ -1,0 +1,277 @@
+<!-- ── CONSOLE ────────────────────────────────── -->
+    <div id="page-console" class="page">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+        <div class="section-title">VeloRoute Test Console</div>
+        <div style="display:flex; gap:6px; background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:8px; padding:3px;">
+          <button class="btn btn-sm console-mode-btn active" id="btn-mode-single" onclick="switchConsoleMode('single')">🎯 Single Model Test</button>
+          <button class="btn btn-sm console-mode-btn btn-ghost" id="btn-mode-compare" onclick="switchConsoleMode('compare')">⚔️ Side-by-Side A/B Benchmark</button>
+        </div>
+      </div>
+
+      <!-- Mode 1: Single Model Layout -->
+      <div id="console-single-layout" class="console-layout">
+        <div>
+          <div class="card-wrap">
+            <div style="margin-bottom:12px;font-size:0.85rem;font-weight:600">Request</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Provider</label>
+                <select id="c-provider" onchange="updateModelOptions()" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                  <option value="">Select provider</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Model</label>
+                <input type="text" id="c-model-search" placeholder="🔍 Filter list..." style="width:100%; padding:6px 12px; margin-bottom:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:var(--text); font-size:0.8rem; outline:none;" oninput="filterConsoleModels()">
+                <select id="c-model" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                  <option value="">Select model</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Or Route via Group</label>
+              <select id="c-group" onchange="onConsoleGroupChange()" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none">
+                <option value="">— Use model or provider —</option>
+              </select>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label style="font-size:0.78rem;color:var(--muted);margin:0;">Prompt</label>
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <button type="button" class="btn btn-sm btn-ghost" id="btn-opt-prompt" onclick="runTokenSaviour('standard')" style="font-size:0.72rem; padding:2px 8px; border-color:var(--cyan); color:var(--cyan);">⚡ Token-Saviour Trim</button>
+                <button type="button" class="btn btn-sm btn-ghost" id="btn-skel-prompt" onclick="runTokenSaviour('skeletonize')" style="font-size:0.72rem; padding:2px 8px; border-color:#c084fc; color:#c084fc;">🦴 AST Skeletonize</button>
+                <button type="button" class="btn btn-sm btn-ghost" id="btn-terse-prompt" onclick="runTokenSaviour('terse')" style="font-size:0.72rem; padding:2px 8px; border-color:#f59e0b; color:#f59e0b;">🗿 Caveman Terse</button>
+                <button type="button" class="btn btn-sm btn-ghost" id="btn-size-prompt" onclick="runTaskSizing()" style="font-size:0.72rem; padding:2px 8px; border-color:var(--green); color:var(--green);">🎯 Sizer Hook</button>
+              </div>
+            </div>
+            <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap; margin-bottom:6px;">
+              <span style="font-size:0.7rem; color:var(--muted2); font-family:var(--mono);">Slash Directives:</span>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="insertSlashCommand('/fast')" style="font-size:0.68rem; padding:1px 6px; font-family:var(--mono);">/fast</button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="insertSlashCommand('/cheap')" style="font-size:0.68rem; padding:1px 6px; font-family:var(--mono);">/cheap</button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="insertSlashCommand('/smart')" style="font-size:0.68rem; padding:1px 6px; font-family:var(--mono);">/smart</button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="insertSlashCommand('/hedge')" style="font-size:0.68rem; padding:1px 6px; font-family:var(--mono);">/hedge</button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="insertSlashCommand('/quality')" style="font-size:0.68rem; padding:1px 6px; font-family:var(--mono);">/quality</button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="insertSlashCommand('/terse')" style="font-size:0.68rem; padding:1px 6px; font-family:var(--mono);">/terse</button>
+            </div>
+            <textarea id="c-prompt" placeholder="What is the capital of France? (Tip: prefix with /fast, /cheap, /hedge, or /terse)" rows="4"></textarea>
+            <div id="c-prompt-optimizer-badge" style="display:none; margin-top:6px; margin-bottom:12px; font-size:0.75rem; padding:6px 10px; border-radius:6px; background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.25); color:var(--cyan); justify-content:space-between; align-items:center;">
+              <span id="c-opt-badge-text"></span>
+              <button class="btn btn-sm btn-ghost" onclick="document.getElementById('c-prompt-optimizer-badge').style.display='none'" style="padding:0 4px; font-size:0.7rem;">&times;</button>
+            </div>
+            <div id="c-sizer-result-badge" style="display:none; margin-top:6px; margin-bottom:12px; font-size:0.75rem; padding:8px 12px; border-radius:8px; background:rgba(0,255,157,0.08); border:1px solid rgba(0,255,157,0.25); color:#fff; flex-direction:column; gap:4px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; color:var(--green);" id="c-sizer-tier"></span>
+                <button class="btn btn-sm btn-ghost" onclick="document.getElementById('c-sizer-result-badge').style.display='none'" style="padding:0 4px; font-size:0.7rem;">&times;</button>
+              </div>
+              <div id="c-sizer-desc" style="color:var(--muted); font-size:0.73rem;"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label style="font-size:0.78rem;color:var(--muted);margin-bottom:6px">Temperature</label>
+                  <span id="temp-val" style="font-size:0.78rem;color:var(--primary);font-family:var(--mono);font-weight:600">0.7</span>
+                </div>
+                <input type="range" id="c-temp" min="0.0" max="2.0" step="0.1" value="0.7" style="accent-color:var(--primary); width:100%; margin-top:6px;" oninput="document.getElementById('temp-val').textContent = this.value">
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label style="font-size:0.78rem;color:var(--muted);margin-bottom:6px">Max Tokens</label>
+                  <span id="tokens-val" style="font-size:0.78rem;color:var(--cyan);font-family:var(--mono);font-weight:600">512</span>
+                </div>
+                <input type="range" id="c-tokens" min="1" max="8192" step="1" value="512" style="accent-color:var(--cyan); width:100%; margin-top:6px;" oninput="document.getElementById('tokens-val').textContent = this.value">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Max Retries</label>
+                <input type="text" id="c-retries" value="2">
+              </div>
+              <div>
+                <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:6px">Retry Delay (s)</label>
+                <input type="text" id="c-delay" value="1.0">
+              </div>
+            </div>
+            <!-- Enterprise Gateway Controls (Collapsible) -->
+            <details style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;">
+              <summary style="font-size: 0.8rem; font-weight: 600; color: var(--cyan); cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
+                <span>🛡️ VeloRoute Enterprise Controls (Guardrails, Canary, Shadow)</span>
+                <span style="font-size: 0.72rem; color: var(--muted2);">Configure &darr;</span>
+              </summary>
+              <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <div>
+                    <label style="font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 4px;">Guardrail Mode</label>
+                    <select id="c-guardrail-mode" style="padding: 7px 10px; font-size: 0.8rem; margin-bottom: 0;">
+                      <option value="off">Off (Default)</option>
+                      <option value="redact">Redact (In-Flight Mask &amp; Restore)</option>
+                      <option value="block">Block (Reject 400 on PII)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 4px;">Prompt Injection Shield</label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; padding-top: 6px;">
+                      <input type="checkbox" id="c-injection-shield" style="width: auto; margin: 0;">
+                      <span style="color: var(--text);">Block Jailbreaks</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                  <div>
+                    <label style="font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 4px;">Canary Model (Optional)</label>
+                    <input type="text" id="c-canary-model" placeholder="e.g. mock/gpt-4o" style="font-family: var(--mono); font-size: 0.8rem; padding: 7px 10px; margin-bottom: 0;">
+                  </div>
+                  <div>
+                    <label style="font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 4px;">Canary Split Weight (%)</label>
+                    <input type="number" id="c-canary-weight" min="1" max="99" placeholder="e.g. 50" style="font-family: var(--mono); font-size: 0.8rem; padding: 7px 10px; margin-bottom: 0;">
+                  </div>
+                </div>
+
+                <div>
+                  <label style="font-size: 0.75rem; color: var(--muted); display: block; margin-bottom: 4px;">Shadow Target Model (Non-blocking background run)</label>
+                  <input type="text" id="c-shadow-model" placeholder="e.g. mock/deepseek-r1" style="font-family: var(--mono); font-size: 0.8rem; padding: 7px 10px; margin-bottom: 0;">
+                </div>
+              </div>
+            </details>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button class="btn btn-primary" onclick="testComplete()" id="run-btn">▶ Run</button>
+              <button class="btn btn-ghost" onclick="testStream()" id="stream-btn">📡 Stream</button>
+            </div>
+            <button class="btn btn-ghost" id="stop-stream-btn" onclick="stopStream()" style="display:none; width:100%; margin-top:8px; border-color:var(--red); color:var(--red); background:rgba(255,59,92,0.1);">⏹ Stop Stream Generation</button>
+          </div>
+        </div>
+        <div>
+          <div class="card-wrap" style="height:calc(100% - 0px)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <span style="font-size:0.85rem;font-weight:600">Output</span>
+              <button class="btn btn-sm btn-ghost" onclick="clearOutput()">Clear</button>
+            </div>
+            <div class="console-output" id="console-output">// Ready to test...\n</div>
+            <div class="output-meta" id="output-meta"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode 2: Side-by-Side A/B Comparator Layout -->
+      <div id="console-compare-layout" style="display:none; flex-direction:column; gap:16px;">
+        <div class="card-wrap">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-size:0.85rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <span>⚔️</span> Side-by-Side Benchmark Configuration
+            </div>
+            <span style="font-size:0.72rem; color:var(--cyan); background:rgba(0,212,255,0.12); padding:2px 8px; border-radius:6px; border:1px solid rgba(0,212,255,0.25);">PARALLEL EXECUTION</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:14px;">
+            <!-- Target A -->
+            <div style="background:rgba(124, 111, 255, 0.08); border:1px solid rgba(124, 111, 255, 0.25); border-radius:10px; padding:12px;">
+              <div style="font-size:0.8rem; font-weight:700; color:#c084fc; margin-bottom:8px;">MODEL A (Primary Target)</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div>
+                  <label style="font-size:0.72rem; color:var(--muted); display:block; margin-bottom:4px;">Provider</label>
+                  <select id="cmp-provider-a" onchange="updateComparatorModels('a')" style="margin-bottom:0; font-size:0.82rem; padding:8px 10px;"></select>
+                </div>
+                <div>
+                  <label style="font-size:0.72rem; color:var(--muted); display:block; margin-bottom:4px;">Model</label>
+                  <select id="cmp-model-a" style="margin-bottom:0; font-size:0.82rem; padding:8px 10px;"></select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Target B -->
+            <div style="background:rgba(0, 212, 255, 0.08); border:1px solid rgba(0, 212, 255, 0.25); border-radius:10px; padding:12px;">
+              <div style="font-size:0.8rem; font-weight:700; color:var(--cyan); margin-bottom:8px;">MODEL B (Challenger Target)</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div>
+                  <label style="font-size:0.72rem; color:var(--muted); display:block; margin-bottom:4px;">Provider</label>
+                  <select id="cmp-provider-b" onchange="updateComparatorModels('b')" style="margin-bottom:0; font-size:0.82rem; padding:8px 10px;"></select>
+                </div>
+                <div>
+                  <label style="font-size:0.72rem; color:var(--muted); display:block; margin-bottom:4px;">Model</label>
+                  <select id="cmp-model-b" style="margin-bottom:0; font-size:0.82rem; padding:8px 10px;"></select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shared Input Prompt -->
+          <div style="margin-bottom:12px;">
+            <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:4px;">Benchmark User Prompt (Shared)</label>
+            <textarea id="cmp-prompt" placeholder="Ask a complex reasoning, coding, or summarization prompt to compare both models..." rows="3"></textarea>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:14px;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">System Prompt (Optional)</label>
+              <input type="text" id="cmp-system" placeholder="e.g. You are an expert Python engineer..." style="margin-bottom:0; font-size:0.8rem;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Temperature: <span id="cmp-temp-val" style="color:var(--primary); font-weight:700;">0.7</span></label>
+              <input type="range" id="cmp-temp" min="0.0" max="2.0" step="0.1" value="0.7" style="margin-bottom:0; accent-color:var(--primary); width:100%;" oninput="document.getElementById('cmp-temp-val').textContent = this.value">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Max Tokens: <span id="cmp-tokens-val" style="color:var(--cyan); font-weight:700;">512</span></label>
+              <input type="range" id="cmp-tokens" min="16" max="4096" step="16" value="512" style="margin-bottom:0; accent-color:var(--cyan); width:100%;" oninput="document.getElementById('cmp-tokens-val').textContent = this.value">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button class="btn btn-primary" id="cmp-run-btn" onclick="runModelComparison()" style="background: linear-gradient(135deg, #7c6fff, #00d4ff); font-weight:700; width:auto; padding:10px 24px; box-shadow:0 0 16px rgba(124, 111, 255, 0.35);">
+              ⚔️ Run Side-by-Side Benchmark
+            </button>
+            <div id="cmp-status" style="font-size:0.8rem; font-family:var(--mono); color:var(--muted);"></div>
+          </div>
+        </div>
+
+        <!-- Winner Summary Banner -->
+        <div id="cmp-winner-banner" style="display:none; background:linear-gradient(135deg, rgba(0, 255, 157, 0.12), rgba(0, 212, 255, 0.08)); border:1px solid rgba(0, 255, 157, 0.3); border-radius:12px; padding:14px 18px;">
+          <div style="font-size:0.85rem; font-weight:700; color:#4ade80; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+            <span>🏆</span> Benchmark Winner Analysis
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+            <div id="cmp-winner-speed" style="background:rgba(0,0,0,0.4); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); font-size:0.8rem;"></div>
+            <div id="cmp-winner-cost" style="background:rgba(0,0,0,0.4); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); font-size:0.8rem;"></div>
+            <div id="cmp-winner-efficiency" style="background:rgba(0,0,0,0.4); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); font-size:0.8rem;"></div>
+          </div>
+        </div>
+
+        <!-- Dual Side-by-Side Results -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+          <!-- Result A -->
+          <div class="card-wrap" style="margin-bottom:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+              <div>
+                <span style="font-size:0.75rem; font-weight:700; color:#c084fc; text-transform:uppercase;">MODEL A:</span>
+                <span id="cmp-title-a" style="font-size:0.82rem; font-weight:600; color:var(--text); font-family:var(--mono); margin-left:4px;">—</span>
+              </div>
+              <button class="btn btn-sm btn-ghost" onclick="copySnippet('cmp-output-a')">📋 Copy</button>
+            </div>
+            <!-- Telemetry Badges -->
+            <div id="cmp-meta-a" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+              <span class="badge" style="background:rgba(255,255,255,0.05); font-size:0.75rem;">⚡ — ms</span>
+              <span class="badge" style="background:rgba(255,255,255,0.05); font-size:0.75rem;">📊 — tokens</span>
+              <span class="badge" style="background:rgba(255,255,255,0.05); font-size:0.75rem;">💰 $0.00</span>
+            </div>
+            <div class="console-output" id="cmp-output-a" style="min-height:220px; max-height:480px; overflow-y:auto;">// Ready for benchmark...\n</div>
+          </div>
+
+          <!-- Result B -->
+          <div class="card-wrap" style="margin-bottom:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+              <div>
+                <span style="font-size:0.75rem; font-weight:700; color:var(--cyan); text-transform:uppercase;">MODEL B:</span>
+                <span id="cmp-title-b" style="font-size:0.82rem; font-weight:600; color:var(--text); font-family:var(--mono); margin-left:4px;">—</span>
+              </div>
+              <button class="btn btn-sm btn-ghost" onclick="copySnippet('cmp-output-b')">📋 Copy</button>
+            </div>
+            <!-- Telemetry Badges -->
+            <div id="cmp-meta-b" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+              <span class="badge" style="background:rgba(255,255,255,0.05); font-size:0.75rem;">⚡ — ms</span>
+              <span class="badge" style="background:rgba(255,255,255,0.05); font-size:0.75rem;">📊 — tokens</span>
+              <span class="badge" style="background:rgba(255,255,255,0.05); font-size:0.75rem;">💰 $0.00</span>
+            </div>
+            <div class="console-output" id="cmp-output-b" style="min-height:220px; max-height:480px; overflow-y:auto;">// Ready for benchmark...\n</div>
+          </div>
+        </div>
+      </div>
+    </div>

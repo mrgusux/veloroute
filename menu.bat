@@ -1,12 +1,17 @@
 @echo off
-title LLMCycle Manager
+title VeloRoute Manager
 cd /d "%~dp0"
 set PYTHONUTF8=1
+
+set CLI_EXE=.\.venv\Scripts\veloroute.exe
+if not exist %CLI_EXE% (
+    set CLI_EXE=.\.venv\Scripts\python.exe -m veloroute.cli
+)
 
 :MENU
 cls
 echo ======================================================
-echo                LLMCycle Easy Launcher
+echo                VeloRoute Easy Launcher
 echo ======================================================
 echo.
 echo  [1] Start Web Dashboard (Opens Browser Automatically)
@@ -39,9 +44,9 @@ goto MENU
 
 :DASHBOARD
 cls
-echo Starting LLMCycle Dashboard...
+echo Starting VeloRoute Dashboard...
 start http://127.0.0.1:8000
-.\.venv\Scripts\llmcycle.exe ui --host 127.0.0.1 --port 8000
+%CLI_EXE% ui --host 127.0.0.1 --port 8000
 pause
 goto MENU
 
@@ -60,9 +65,9 @@ if "%akey%"=="" goto MENU
 set /p burl="Enter Base URL (Press Enter to skip if standard): "
 
 if not "%burl%"=="" (
-    .\.venv\Scripts\llmcycle.exe providers add %prov% %akey% --base-url "%burl%"
+    %CLI_EXE% providers add %prov% %akey% --base-url "%burl%"
 ) else (
-    .\.venv\Scripts\llmcycle.exe keys add %prov% %akey%
+    %CLI_EXE% keys add %prov% %akey%
 )
 echo.
 echo Provider details saved to .env!
@@ -84,13 +89,13 @@ set /p nkeys="Enter New API Keys (or Enter to keep): "
 
 if not "%nburl%"=="" (
     if not "%nkeys%"=="" (
-        .\.venv\Scripts\llmcycle.exe providers edit %prov% --base-url "%nburl%" --keys "%nkeys%"
+        %CLI_EXE% providers edit %prov% --base-url "%nburl%" --keys "%nkeys%"
     ) else (
-        .\.venv\Scripts\llmcycle.exe providers edit %prov% --base-url "%nburl%"
+        %CLI_EXE% providers edit %prov% --base-url "%nburl%"
     )
 ) else (
     if not "%nkeys%"=="" (
-        .\.venv\Scripts\llmcycle.exe keys edit %prov% "%nkeys%"
+        %CLI_EXE% keys edit %prov% "%nkeys%"
     ) else (
         echo No changes requested.
     )
@@ -121,7 +126,7 @@ set /p prov="Enter Provider Name to Delete: "
 if "%prov%"=="" goto MENU
 set /p confirm="Are you sure you want to delete '%prov%'? [Y/N]: "
 if /i "%confirm%"=="Y" (
-    .\.venv\Scripts\llmcycle.exe providers remove %prov%
+    %CLI_EXE% providers remove %prov%
 ) else (
     echo Deletion cancelled.
 )
@@ -135,7 +140,7 @@ set /p prov="Enter Provider Name: "
 if "%prov%"=="" goto MENU
 set /p dkey="Enter specific API Key (or hint) to remove: "
 if "%dkey%"=="" goto MENU
-.\.venv\Scripts\llmcycle.exe keys remove %prov% "%dkey%"
+%CLI_EXE% keys remove %prov% "%dkey%"
 echo.
 pause
 goto MENU
@@ -146,9 +151,9 @@ echo ======================================================
 echo               Configured Providers & Keys
 echo ======================================================
 echo.
-.\.venv\Scripts\llmcycle.exe list
+%CLI_EXE% list
 echo.
-.\.venv\Scripts\llmcycle.exe keys list
+%CLI_EXE% keys list
 echo.
 pause
 goto MENU
@@ -161,9 +166,9 @@ echo ======================================================
 echo.
 set /p mprov="Enter Provider (Press Enter to list for all): "
 if not "%mprov%"=="" (
-    .\.venv\Scripts\llmcycle.exe models %mprov%
+    %CLI_EXE% models %mprov%
 ) else (
-    .\.venv\Scripts\llmcycle.exe models
+    %CLI_EXE% models
 )
 echo.
 pause
@@ -175,7 +180,7 @@ echo ======================================================
 echo                 Testing Connections...
 echo ======================================================
 echo.
-.\.venv\Scripts\llmcycle.exe ping
+%CLI_EXE% ping
 echo.
 pause
 goto MENU
@@ -186,7 +191,7 @@ echo ======================================================
 echo               Egress Proxy Settings
 echo ======================================================
 echo.
-.\.venv\Scripts\llmcycle.exe proxy show
+%CLI_EXE% proxy show
 echo.
 echo [1] Set new proxy URL
 echo [2] Clear proxy
@@ -195,13 +200,13 @@ echo.
 choice /c 120 /m "Select option"
 if errorlevel 3 goto MENU
 if errorlevel 2 (
-    .\.venv\Scripts\llmcycle.exe proxy clear
+    %CLI_EXE% proxy clear
     pause
     goto MENU
 )
 if errorlevel 1 (
     set /p purl="Enter proxy URL (e.g. http://127.0.0.1:8080): "
-    if not "%purl%"=="" .\.venv\Scripts\llmcycle.exe proxy set "%purl%"
+    if not "%purl%"=="" %CLI_EXE% proxy set "%purl%"
     pause
     goto MENU
 )

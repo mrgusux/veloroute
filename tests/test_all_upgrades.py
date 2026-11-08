@@ -7,22 +7,22 @@ from pathlib import Path
 # Ensure package is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from llmcycle.core.keys import KeyManager, KeyStatus
-from llmcycle.core.router import ModelRouter, RoutingStrategy
-from llmcycle.client import LLMCycle
-from llmcycle.storage import StorageManager, StorageBackend
-from llmcycle.utils import parse_model, MODEL_PRICING, CONTEXT_WINDOWS
-from llmcycle.providers.registry import PROVIDER_REGISTRY
-from llmcycle.core.semantic import SemanticRouter
-from llmcycle.core.guardrail import GuardrailManager
-from llmcycle.schema import CompletionRequest, Message
-from llmcycle.core.rate_limit import RateLimitManager
-from llmcycle.core.config_loader import EnvConfigLoader
-from llmcycle.core.cache import SQLCache
-from llmcycle.core.injection import InjectionGuard
-from llmcycle.core.semantic_cache import SemanticCache
-from llmcycle.core.groups import GroupManager
-from llmcycle.storage.backends.sql import SQLStorage
+from veloroute.core.keys import KeyManager, KeyStatus
+from veloroute.core.router import ModelRouter, RoutingStrategy
+from veloroute.client import VeloRoute
+from veloroute.storage import StorageManager, StorageBackend
+from veloroute.utils import parse_model, MODEL_PRICING, CONTEXT_WINDOWS
+from veloroute.providers.registry import PROVIDER_REGISTRY
+from veloroute.core.semantic import SemanticRouter
+from veloroute.core.guardrail import GuardrailManager
+from veloroute.schema import CompletionRequest, Message
+from veloroute.core.rate_limit import RateLimitManager
+from veloroute.core.config_loader import EnvConfigLoader
+from veloroute.core.cache import SQLCache
+from veloroute.core.injection import InjectionGuard
+from veloroute.core.semantic_cache import SemanticCache
+from veloroute.core.groups import GroupManager
+from veloroute.storage.backends.sql import SQLStorage
 
 
 class TestKeyManager(unittest.TestCase):
@@ -113,9 +113,9 @@ class TestModelRouter(unittest.TestCase):
         self.assertEqual(route[1], ("deepseek", "deepseek-chat"))
 
 
-class TestLLMCycleClient(unittest.TestCase):
+class TestVeloRouteClient(unittest.TestCase):
     def test_provider_management(self):
-        client = LLMCycle()
+        client = VeloRoute()
         client.add_provider("custom_ai", ["sk-key1", "sk-key2"], "https://custom.ai/v1")
         self.assertIn("custom_ai", client.get_providers())
         self.assertEqual(client._providers["custom_ai"].base_url, "https://custom.ai/v1")
@@ -188,15 +188,15 @@ class TestFastAPIRoutes(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         from starlette.testclient import TestClient
-        from llmcycle.ui.app import app
-        from llmcycle.ui.routes.deps import SESSION_TOKEN
+        from veloroute.ui.app import app
+        from veloroute.ui.routes.deps import SESSION_TOKEN
         cls.client = TestClient(app)
         cls.headers = {"Authorization": f"Bearer {SESSION_TOKEN}"}
 
     def test_base_page(self):
         res = self.client.get("/")
         self.assertEqual(res.status_code, 200)
-        self.assertIn("LLMCycle Dashboard", res.text)
+        self.assertIn("VeloRoute Dashboard", res.text)
         self.assertIn("providers-grid", res.text)
 
     def test_provider_and_key_crud(self):
@@ -276,35 +276,35 @@ class TestCLISubprocess(unittest.TestCase):
         env.pop("PYTHONUTF8", None)
 
         # 1. Help command with unicode characters
-        p = subprocess.run([python_exe, "-m", "llmcycle.cli", "help"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.run([python_exe, "-m", "veloroute.cli", "help"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(p.returncode, 0)
         self.assertIn("Universal LLM Router", p.stdout)
 
         # 2. Providers add
-        p = subprocess.run([python_exe, "-m", "llmcycle.cli", "providers", "add", "clitest", "key-a,key-b", "--base-url", "https://api.clitest.com"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.run([python_exe, "-m", "veloroute.cli", "providers", "add", "clitest", "key-a,key-b", "--base-url", "https://api.clitest.com"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(p.returncode, 0)
 
         # 3. Providers edit
-        p = subprocess.run([python_exe, "-m", "llmcycle.cli", "providers", "edit", "clitest", "--base-url", "https://api.clitest2.com"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.run([python_exe, "-m", "veloroute.cli", "providers", "edit", "clitest", "--base-url", "https://api.clitest2.com"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(p.returncode, 0)
 
         # 4. Keys remove single key
-        p = subprocess.run([python_exe, "-m", "llmcycle.cli", "keys", "remove", "clitest", "key-a"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.run([python_exe, "-m", "veloroute.cli", "keys", "remove", "clitest", "key-a"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(p.returncode, 0)
 
         # 5. Providers remove
-        p = subprocess.run([python_exe, "-m", "llmcycle.cli", "providers", "remove", "clitest"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.run([python_exe, "-m", "veloroute.cli", "providers", "remove", "clitest"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(p.returncode, 0)
 
         # 6. Proxy set, show, clear
-        p = subprocess.run([python_exe, "-m", "llmcycle.cli", "proxy", "set", "http://127.0.0.1:9099"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.run([python_exe, "-m", "veloroute.cli", "proxy", "set", "http://127.0.0.1:9099"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(p.returncode, 0)
 
-        p = subprocess.run([python_exe, "-m", "llmcycle.cli", "proxy", "show"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.run([python_exe, "-m", "veloroute.cli", "proxy", "show"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(p.returncode, 0)
         self.assertIn("9099", p.stdout)
 
-        p = subprocess.run([python_exe, "-m", "llmcycle.cli", "proxy", "clear"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        p = subprocess.run([python_exe, "-m", "veloroute.cli", "proxy", "clear"], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(p.returncode, 0)
 
 

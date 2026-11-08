@@ -1,0 +1,64 @@
+<!-- ── LOGIN SCREEN ─────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-wrapper">
+    <!-- ThreeUI 3D Holographic Gyroscope / Energy Rings -->
+    <div class="holo-portal-wrap" aria-hidden="true">
+      <div class="holo-ring holo-ring-outer"></div>
+      <div class="holo-ring holo-ring-inner"></div>
+      <div class="holo-core">
+        <span class="holo-icon">⚡</span>
+      </div>
+      <div class="holo-pulse"></div>
+    </div>
+
+    <!-- 3D Glassmorphic Card -->
+    <div class="login-card">
+      <div class="login-badge-wrap">
+        <span class="login-badge">
+          <span class="login-badge-dot"></span>
+          ENTERPRISE ROUTER CORE
+        </span>
+      </div>
+
+      <h1 class="login-title">VeloRoute</h1>
+      <p class="login-sub">VeloRoute - Universal AI Gateway &amp; High-Availability Routing</p>
+
+      <div id="login-error" role="alert" style="display:none;">
+        <span>⚠️ Invalid credentials. Try again.</span>
+      </div>
+
+      <form id="login-form">
+        <div class="input-group">
+          <span class="input-icon">👤</span>
+          <input type="text" id="un" placeholder="Admin username" required autocomplete="username">
+        </div>
+
+        <div class="input-group">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="pw" placeholder="Security password" required autocomplete="current-password">
+        </div>
+
+        <!-- ThreeUI Liquid Metal Sign-In Button -->
+        <button type="submit" class="btn-liquid-metal" id="login-submit-btn">
+          <span class="btn-liquid-shine"></span>
+          <span class="btn-liquid-content">
+            <span>Access Gateway</span>
+            <span class="btn-arrow">&rarr;</span>
+          </span>
+        </button>
+      </form>
+
+      <!-- System Telemetry Footer -->
+      <div class="login-telemetry">
+        <div class="telemetry-item">
+          <span class="telemetry-dot"></span>
+          <span>ONLINE</span>
+        </div>
+        <div class="telemetry-divider">•</div>
+        <div class="telemetry-item">AES-256 SECURED</div>
+        <div class="telemetry-divider">•</div>
+        <div class="telemetry-item">v1.0.0</div>
+      </div>
+    </div>
+  </div>
+</div>

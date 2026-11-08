@@ -9,9 +9,9 @@ from unittest.mock import patch, AsyncMock, MagicMock
 # Ensure package is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from llmcycle import (
-    LLMCycle,
-    LLMCycleError,
+from veloroute import (
+    VeloRoute,
+    VeloRouteError,
     RateLimitError,
     AuthenticationError,
     PermissionDeniedError,
@@ -37,12 +37,12 @@ from llmcycle import (
     MODEL_PRICING,
     CONTEXT_WINDOWS,
 )
-from llmcycle.core.errors import classify_http_error
-from llmcycle.schema import CompletionRequest, Message
-from llmcycle.providers.openai_compatible import OpenAICompatibleProvider
+from veloroute.core.errors import classify_http_error
+from veloroute.schema import CompletionRequest, Message
+from veloroute.providers.openai_compatible import OpenAICompatibleProvider
 from starlette.testclient import TestClient
-from llmcycle.ui.app import app
-from llmcycle.ui.routes.deps import SESSION_TOKEN, llm_client
+from veloroute.ui.app import app
+from veloroute.ui.routes.deps import SESSION_TOKEN, llm_client
 
 
 class TestModelPricingAndContextWindows(unittest.TestCase):
@@ -161,7 +161,7 @@ class TestTokenCountingEngine(unittest.TestCase):
 class TestDynamicRequestHeaders(unittest.TestCase):
     def test_hop_by_hop_and_auth_stripping(self):
         incoming = {
-            "Host": "api.llmcycle.com",
+            "Host": "api.veloroute.com",
             "Connection": "keep-alive",
             "Content-Length": "1234",
             "Cookie": "session=abc",
@@ -444,7 +444,7 @@ class TestProviderPingAndHealth(unittest.TestCase):
 
     def test_client_ping_provider_and_ping_all(self):
         async def _run():
-            client = LLMCycle()
+            client = VeloRoute()
             client.add_provider("testprov", ["sk-test-key"])
             with patch.object(client._providers["testprov"], "ping", new_callable=AsyncMock) as mock_p:
                 mock_p.return_value = {
@@ -464,7 +464,7 @@ class TestProviderPingAndHealth(unittest.TestCase):
 
     def test_ping_provider_recovers_disabled_key(self):
         async def _run():
-            client = LLMCycle()
+            client = VeloRoute()
             client.add_provider("mockprov", ["sk-disabled-key"], "https://mock.api")
             client.key_manager.report_error("mockprov", "sk-disabled-key", "auth")
             # Key is invalid initially
@@ -485,10 +485,10 @@ class TestProviderPingAndHealth(unittest.TestCase):
 
     def test_complete_and_stream_with_message_objects(self):
         async def _run():
-            client = LLMCycle()
+            client = VeloRoute()
             client.add_provider("testprov", ["sk-k1"], "https://mock.api")
             with patch.object(client._providers["testprov"], "generate", new_callable=AsyncMock) as mock_gen:
-                from llmcycle.schema import CompletionResponse
+                from veloroute.schema import CompletionResponse
                 mock_gen.return_value = CompletionResponse(
                     id="resp-1", model="test-m", provider="testprov", content="Hello!",
                     reasoning_content="Reasoning trace",

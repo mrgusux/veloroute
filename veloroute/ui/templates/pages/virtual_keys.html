@@ -1,0 +1,271 @@
+<section id="page-keys" class="page" data-ui aria-labelledby="vk-title">
+  <header class="vk-header">
+    <div>
+      <h1 id="vk-title">VeloRoute Virtual Keys</h1>
+      <p>Scope client credentials by model and request rate. Key secrets appear only at creation or rotation.</p>
+    </div>
+    <div class="vk-header-actions">
+      <button class="vk-action" type="button" onclick="loadGatewayKeys()">Refresh</button>
+      <button class="vk-primary" type="button" onclick="openGatewayKeyCreate()">Create virtual key</button>
+    </div>
+  </header>
+
+  <!-- Gateway Base URL Banner -->
+  <div style="background: linear-gradient(135deg, rgba(124, 111, 255, 0.12), rgba(0, 212, 255, 0.08)); border: 1px solid rgba(124, 111, 255, 0.3); border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <span style="background: var(--primary); color: #fff; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">VeloRoute Gateway Base URL</span>
+      <span style="font-size: 0.85rem; color: var(--text);">Use with your Virtual Keys in OpenCode, Cursor, Continue:</span>
+      <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); border: 1px solid var(--border2); padding: 4px 10px; border-radius: 6px;">
+        <code style="font-family: var(--mono); font-size: 0.88rem; color: var(--cyan); font-weight: 600;">http://127.0.0.1:8000/v1</code>
+        <button type="button" class="btn btn-sm btn-ghost" style="padding: 1px 6px; font-size: 0.75rem; color: var(--cyan); border: 1px solid rgba(0,212,255,0.3);" onclick="copyToClipboard((window.location.origin &amp;&amp; window.location.origin !== 'null' ? window.location.origin : 'http://127.0.0.1:8000') + '/v1', 'Base URL copied: ' + (window.location.origin &amp;&amp; window.location.origin !== 'null' ? window.location.origin : 'http://127.0.0.1:8000') + '/v1')">📋 Copy URL</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="vk-stats" aria-label="Virtual key totals">
+    <div class="vk-stat"><div class="vk-stat-label">Active keys</div><div class="vk-stat-value" id="vk-stat-active">—</div></div>
+    <div class="vk-stat"><div class="vk-stat-label">Requests</div><div class="vk-stat-value" id="vk-stat-requests">—</div></div>
+    <div class="vk-stat"><div class="vk-stat-label">Tokens</div><div class="vk-stat-value" id="vk-stat-tokens">—</div></div>
+    <div class="vk-stat"><div class="vk-stat-label">Tracked spend</div><div class="vk-stat-value" id="vk-stat-spend">—</div></div>
+  </div>
+
+  <div class="vk-toolbar">
+    <div class="vk-tabs" role="tablist" aria-label="Filter virtual keys">
+      <button class="vk-tab" type="button" role="tab" aria-selected="true" data-vk-filter="all">All keys</button>
+      <button class="vk-tab" type="button" role="tab" aria-selected="false" data-vk-filter="active">Active</button>
+      <button class="vk-tab" type="button" role="tab" aria-selected="false" data-vk-filter="inactive">Inactive</button>
+    </div>
+    <input class="vk-search" id="vk-search" type="search" placeholder="Search names, IDs, models" aria-label="Search virtual keys" oninput="renderGatewayKeys()">
+  </div>
+
+  <div id="vk-list-error" class="vk-error" role="alert" hidden></div>
+  <div class="vk-table-wrap">
+    <table class="vk-table" aria-label="Virtual API keys">
+      <thead>
+        <tr>
+          <th scope="col">Key</th>
+          <th scope="col">Model access</th>
+          <th scope="col" class="num">Current window</th>
+          <th scope="col" class="num">Spend</th>
+          <th scope="col">State</th>
+          <th scope="col" class="num">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="vk-table-body">
+        <tr><td colspan="6" class="vk-empty">Loading virtual keys…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Create Virtual Key Modal -->
+<div class="vk-modal-overlay" id="vk-create-overlay" role="presentation" onclick="if(event.target===this)closeGatewayKeyModal('vk-create-overlay')">
+  <section class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-create-title" style="width: min(640px, 95vw); background: #0c0d1e; border: 1px solid rgba(124, 111, 255, 0.3); border-radius: 16px; padding: 26px; box-shadow: 0 25px 60px rgba(0,0,0,0.85);">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.4rem;">🔑</span>
+        <h2 id="vk-create-title" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #fff;">Create Virtual API Key</h2>
+      </div>
+      <button type="button" class="btn btn-sm btn-ghost" style="padding: 2px 8px; font-size: 1rem; color: #94a3b8;" onclick="closeGatewayKeyModal('vk-create-overlay')">&times;</button>
+    </div>
+    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5;">
+      Generate a client API key (<code>sk-velo-...</code>) to connect OpenCode, Cursor, Continue, or your apps to VeloRoute.
+    </p>
+
+    <form id="vk-create-form" onsubmit="createGatewayKey(event)">
+      <!-- Key Name & Team / Workspace -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div class="vk-field">
+          <label for="vk-create-name" style="font-weight: 600; color: #e2e8f0; margin-bottom: 6px; display: block; font-size: 0.85rem;">
+            Key Name / Label <span style="color: #ef4444;">*</span>
+          </label>
+          <input id="vk-create-name" required maxlength="120" autocomplete="off" placeholder="e.g. OpenCode - Laptop, Cursor, My App" style="width: 100%; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.9rem;">
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Recognizable name for the client app using this key.</div>
+        </div>
+        <div class="vk-field">
+          <label for="vk-create-team" style="font-weight: 600; color: #e2e8f0; margin-bottom: 6px; display: block; font-size: 0.85rem;">
+            👥 Team / Workspace
+          </label>
+          <input id="vk-create-team" maxlength="64" autocomplete="off" placeholder="e.g. Engineering, QA" style="width: 100%; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.9rem;">
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Optional multi-tenant team tag.</div>
+        </div>
+      </div>
+
+      <!-- Model Scope (Intuitive Selection) -->
+      <div class="vk-field vk-field-full" style="margin-bottom: 16px;">
+        <label style="font-weight: 600; color: #e2e8f0; margin-bottom: 8px; display: block; font-size: 0.85rem;">
+          🎯 Model Access Scope
+        </label>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
+          <label class="vk-scope-option" style="cursor: pointer; padding: 10px; border-radius: 8px; border: 1px solid #7c6fff; background: rgba(124, 111, 255, 0.12); display: flex; flex-direction: column; gap: 4px; transition: all 0.2s;" id="scope-opt-all-lbl">
+            <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; color: #fff;">
+              <input type="radio" name="vk-scope-type" value="all" checked onchange="onVkScopeChange(this.value)" style="margin: 0; width: auto;">
+              🌟 All Models
+            </div>
+            <span style="font-size: 0.72rem; color: #94a3b8;">Full access (Recommended)</span>
+          </label>
+
+          <label class="vk-scope-option" style="cursor: pointer; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 4px; transition: all 0.2s;" id="scope-opt-prov-lbl">
+            <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; color: #fff;">
+              <input type="radio" name="vk-scope-type" value="provider" onchange="onVkScopeChange(this.value)" style="margin: 0; width: auto;">
+              🏢 By Provider
+            </div>
+            <span style="font-size: 0.72rem; color: #94a3b8;">Restrict to one provider</span>
+          </label>
+
+          <label class="vk-scope-option" style="cursor: pointer; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 4px; transition: all 0.2s;" id="scope-opt-custom-lbl">
+            <div style="display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.85rem; color: #fff;">
+              <input type="radio" name="vk-scope-type" value="custom" onchange="onVkScopeChange(this.value)" style="margin: 0; width: auto;">
+              ⚙️ Custom List
+            </div>
+            <span style="font-size: 0.72rem; color: #94a3b8;">Free only or custom models</span>
+          </label>
+        </div>
+
+        <!-- Dynamic Provider Selection Container -->
+        <div id="vk-provider-selector" style="display: none; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
+          <div style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 8px;">Click a provider to scope this key:</div>
+          <div id="vk-provider-chips" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+        </div>
+
+        <!-- Custom Models Container -->
+        <div id="vk-custom-models-container" style="display: none;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <span style="font-size: 0.8rem; color: #94a3b8;">Allowed models (one per line):</span>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-sm btn-ghost" style="padding: 2px 8px; font-size: 0.75rem; color: #10b981;" onclick="setVkAllowedPreset('free')">🟢 Free Models Only</button>
+              <button type="button" class="btn btn-sm btn-ghost" style="padding: 2px 8px; font-size: 0.75rem; color: #94a3b8;" onclick="setVkAllowedPreset('clear')">✕ Clear</button>
+            </div>
+          </div>
+          <textarea id="vk-create-models" placeholder="Leave empty for all models, or enter models like:&#10;apinex/claude-sonnet-5.5&#10;apinex/*" style="width: 100%; min-height: 75px; padding: 10px 14px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-family: var(--mono); font-size: 0.85rem;"></textarea>
+        </div>
+      </div>
+
+      <!-- Collapsible Advanced Limits & Expiry (Optional) -->
+      <details id="vk-limits-details" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;">
+        <summary style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1; cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px;">
+          <span>⚙️</span>
+          <span>Advanced: Limits &amp; Expiry (Optional &mdash; Default is Unlimited)</span>
+        </summary>
+        <div style="margin-top: 14px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
+          <div class="vk-field">
+            <label for="vk-create-budget" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px; display: block;">Spend Budget (USD)</label>
+            <input id="vk-create-budget" type="number" min="0" step="0.01" placeholder="Unlimited (e.g. 5.00)" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+          </div>
+          <div class="vk-field">
+            <label for="vk-create-expiry-select" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px; display: block;">Expires In</label>
+            <select id="vk-create-expiry-select" onchange="onVkExpiryChange(this.value)" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+              <option value="">Never Expires (Default)</option>
+              <option value="24">24 Hours (1 Day)</option>
+              <option value="168">7 Days (1 Week)</option>
+              <option value="720">30 Days (1 Month)</option>
+              <option value="custom">Custom Hours...</option>
+            </select>
+            <input id="vk-create-expiry" type="number" min="0.01" step="0.01" placeholder="Custom hours" style="display: none; width: 100%; margin-top: 6px; padding: 6px 10px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+          </div>
+          <div class="vk-field">
+            <label for="vk-create-rpm" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px; display: block;">Requests / min (RPM)</label>
+            <input id="vk-create-rpm" type="number" min="1" step="1" placeholder="Unlimited (e.g. 60)" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+          </div>
+          <div class="vk-field">
+            <label for="vk-create-tpm" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px; display: block;">Tokens / min (TPM)</label>
+            <input id="vk-create-tpm" type="number" min="1" step="1" placeholder="Unlimited (e.g. 100000)" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+          </div>
+          <div class="vk-field" style="grid-column: span 2;">
+            <label for="vk-create-queue" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px; display: block;">⏱️ Rate-Limit Request Buffer Queue (Seconds)</label>
+            <input id="vk-create-queue" type="number" min="0" max="60" step="1" placeholder="0 = instant 429 rejection (e.g. 5 = buffer up to 5s)" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+            <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px;">Hold requests in an async queue for up to N seconds instead of rejecting immediately when rate limits are exceeded.</div>
+          </div>
+          <div class="vk-field">
+            <label for="vk-create-alert-threshold" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px; display: block;">⚠️ Budget Alert Threshold (%)</label>
+            <input id="vk-create-alert-threshold" type="number" min="10" max="100" step="5" placeholder="80 (triggers alert at 80% spend)" style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+          </div>
+          <div class="vk-field">
+            <label for="vk-create-auto-pause" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px; display: block;">🛑 Auto-Pause on 100% Budget</label>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+              <input id="vk-create-auto-pause" type="checkbox" checked style="width: auto; margin: 0; cursor: pointer;">
+              <span style="font-size: 0.8rem; color: #94a3b8;">Pause key when budget quota runs out</span>
+            </div>
+          </div>
+          <div class="vk-field" style="grid-column: span 2;">
+            <label for="vk-create-webhook" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 4px; display: block;">🔔 Budget Alert Webhook URL (Optional)</label>
+            <input id="vk-create-webhook" type="url" placeholder="https://discord.com/api/webhooks/... or https://hooks.slack.com/..." style="width: 100%; padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem;">
+            <div style="font-size: 0.72rem; color: #64748b; margin-top: 4px;">Delivers asynchronous JSON alert payloads when threshold is crossed or budget is exhausted.</div>
+          </div>
+        </div>
+      </details>
+
+      <div class="vk-modal-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-ghost" type="button" onclick="closeGatewayKeyModal('vk-create-overlay')">Cancel</button>
+        <button class="btn btn-primary" type="submit" style="width: auto; padding: 10px 24px;">🔑 Create Virtual Key</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<!-- Edit Virtual Key Modal -->
+<div class="vk-modal-overlay" id="vk-edit-overlay" role="presentation" onclick="if(event.target===this)closeGatewayKeyModal('vk-edit-overlay')">
+  <section class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-edit-title">
+    <h2 id="vk-edit-title">Edit virtual key</h2>
+    <p>Blank limits remove them. Clearing allowed models makes this key available to every configured model.</p>
+    <form id="vk-edit-form" onsubmit="saveGatewayKey(event)">
+      <input id="vk-edit-id" type="hidden">
+      <div class="vk-form-grid">
+        <div class="vk-field"><label for="vk-edit-name">Key name</label><input id="vk-edit-name" required maxlength="120"></div>
+        <div class="vk-field"><label for="vk-edit-team">Team / Workspace</label><input id="vk-edit-team" maxlength="64" placeholder="e.g. Engineering"></div>
+        <div class="vk-field"><label for="vk-edit-budget">Spend budget (USD)</label><input id="vk-edit-budget" type="number" min="0" step="0.01"></div>
+        <div class="vk-field"><label for="vk-edit-alert-threshold">Alert Threshold (%)</label><input id="vk-edit-alert-threshold" type="number" min="10" max="100" step="5" placeholder="80"></div>
+        <div class="vk-field"><label for="vk-edit-auto-pause">Auto-pause on limit</label><select id="vk-edit-auto-pause"><option value="true">Yes (Auto-pause)</option><option value="false">No (Warn only)</option></select></div>
+        <div class="vk-field vk-field-full"><label for="vk-edit-webhook">Budget Alert Webhook URL</label><input id="vk-edit-webhook" type="url" placeholder="https://..."></div>
+        <div class="vk-field"><label for="vk-edit-rpm">Requests per minute</label><input id="vk-edit-rpm" type="number" min="1" step="1"></div>
+        <div class="vk-field"><label for="vk-edit-tpm">Tokens per minute</label><input id="vk-edit-tpm" type="number" min="1" step="1"></div>
+        <div class="vk-field"><label for="vk-edit-state">Key state</label><select id="vk-edit-state"><option value="true">Enabled</option><option value="false">Paused</option></select></div>
+        <div class="vk-field"><label for="vk-edit-expiry">Expires at</label><input id="vk-edit-expiry" type="datetime-local"></div>
+        <div class="vk-field vk-field-full"><label for="vk-edit-models">Allowed models</label><textarea id="vk-edit-models"></textarea></div>
+      </div>
+      <div class="vk-modal-actions"><button class="vk-action" type="button" onclick="closeGatewayKeyModal('vk-edit-overlay')">Cancel</button><button class="vk-primary" type="submit">Save changes</button></div>
+    </form>
+  </section>
+</div>
+
+<!-- Key Secret Display Modal -->
+<div class="vk-modal-overlay" id="vk-secret-overlay" role="presentation" onclick="if(event.target===this)closeGatewayKeySecret()">
+  <section class="vk-modal" role="dialog" aria-modal="true" aria-labelledby="vk-secret-title" style="width: min(620px, 95vw); background: #0c0d1e; border: 1px solid rgba(0, 255, 157, 0.3); border-radius: 16px; padding: 26px; box-shadow: 0 25px 60px rgba(0,0,0,0.85);">
+    <div style="text-align: center; margin-bottom: 16px;">
+      <span style="font-size: 2.2rem;">🎉</span>
+      <h2 id="vk-secret-title" style="font-size: 1.3rem; font-weight: 700; color: #fff; margin-top: 8px;">Your Virtual API Key is Ready!</h2>
+      <p style="color: #cbd5e1; font-size: 0.85rem; margin-top: 4px;">Copy this secret key now. For your security, it will not be displayed again.</p>
+    </div>
+
+    <!-- The Secret Key Box -->
+    <div style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(124, 111, 255, 0.4); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <code class="vk-secret-value" id="vk-secret-value" style="background: transparent; padding: 0; font-family: var(--mono); font-size: 0.95rem; color: #38bdf8; font-weight: 600; word-break: break-all;"></code>
+      <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+        <button class="btn btn-sm btn-cyan" type="button" onclick="copyGatewayKey()" style="white-space: nowrap; padding: 6px 14px;">📋 Copy Key</button>
+        <span id="vk-copy-status" style="font-size:0.75rem; color:var(--cyan); margin-left:8px;"></span>
+      </div>
+    </div>
+
+    <!-- Ready-to-paste for OpenCode / Cursor -->
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <span style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Setup in OpenCode / Cursor / Continue</span>
+        <button class="btn btn-sm btn-ghost" type="button" style="font-size: 0.75rem; color: var(--primary);" onclick="copyFullOpenCodeConfig()">📋 Copy All Config</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: #94a3b8;">Base URL:</span>
+          <code id="vk-secret-base-url" style="color: #38bdf8; font-family: var(--mono);">http://127.0.0.1:8000/v1</code>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: #94a3b8;">API Key:</span>
+          <span style="color: #94a3b8; font-family: var(--mono);">sk-velo-••••••••••••</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="vk-modal-actions" style="display: flex; justify-content: flex-end;">
+      <button class="btn btn-primary" type="button" onclick="closeGatewayKeySecret()" style="width: auto; padding: 10px 24px;">Done / I Saved My Key</button>
+    </div>
+  </section>
+</div>

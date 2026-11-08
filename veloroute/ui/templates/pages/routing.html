@@ -1,0 +1,281 @@
+<!-- ── ROUTING ────────────────────────────────── -->
+    <div id="page-routing" class="page">
+      <div class="section-hdr"><div class="section-title">VeloRoute Routing Strategy</div></div>
+      <div class="card-wrap">
+        <div style="margin-bottom:10px;font-size:0.85rem;color:var(--muted)">Select how VeloRoute routes requests across providers:</div>
+        <div class="strategy-btns" id="strategy-btns" style="display:flex; flex-wrap:wrap; gap:8px;">
+          <button class="strat-btn" id="strat-priority" data-v="priority" onclick="setStrategy('priority')">🏆 Priority</button>
+          <button class="strat-btn" id="strat-round_robin" data-v="round_robin" onclick="setStrategy('round_robin')">🔄 Round Robin</button>
+          <button class="strat-btn" id="strat-lowest_latency" data-v="lowest_latency" onclick="setStrategy('lowest_latency')">⚡ Lowest Latency</button>
+          <button class="strat-btn" id="strat-least_busy" data-v="least_busy" onclick="setStrategy('least_busy')">⚖️ Least Busy</button>
+          <button class="strat-btn" id="strat-weighted" data-v="weighted" onclick="setStrategy('weighted')">📊 Weighted</button>
+          <button class="strat-btn" id="strat-active_first" data-v="active_first" onclick="setStrategy('active_first')">🛡️ Active First</button>
+          <button class="strat-btn" id="strat-complexity" data-v="complexity" onclick="setStrategy('complexity')" style="border-color: rgba(124, 111, 255, 0.4);">🧠 Complexity (AI Heuristic)</button>
+          <button class="strat-btn" id="strat-kv_affinity" data-v="kv_affinity" onclick="setStrategy('kv_affinity')" style="border-color: rgba(0, 212, 255, 0.4);">⚡ KV-Cache Affinity</button>
+          <button class="strat-btn" id="strat-hedging" data-v="hedging" onclick="setStrategy('hedging')" style="border-color: rgba(245, 158, 11, 0.4);">🏎️ Parallel Hedging</button>
+          <button class="strat-btn" id="strat-quality" data-v="quality" onclick="setStrategy('quality')" style="border-color: rgba(0, 255, 157, 0.4);">⭐ Quality Feedback</button>
+        </div>
+      </div>
+
+      <!-- Canary Traffic Splitting Section -->
+      <div class="section-hdr" style="margin-top:24px">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-title">🔀 Canary Traffic Splitting</div>
+          <span style="font-size:0.72rem; padding:2px 8px; border-radius:6px; background:rgba(192,132,252,0.15); color:#c084fc; border:1px solid rgba(192,132,252,0.3);">GRADUAL ROLLOUT</span>
+        </div>
+      </div>
+      <div class="card-wrap">
+        <div style="font-size:0.85rem; color:var(--muted); margin-bottom:14px;">
+          Safely test newer, cheaper, or experimental models in production by routing a controlled percentage of requests to a canary target without changing client code.
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:6px;">Primary Production Model</label>
+            <input type="text" id="canary-primary-model" placeholder="e.g. openai/gpt-4o or gpt-4o" style="font-family:var(--mono); margin-bottom:0;">
+          </div>
+          <div>
+            <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:6px;">Canary Candidate Model</label>
+            <input type="text" id="canary-target-model" placeholder="e.g. openai/gpt-4.5-preview or mock/gpt-4o" style="font-family:var(--mono); margin-bottom:0;">
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:0.78rem; color:var(--muted); margin-bottom:0;">Canary Traffic Split Percentage:</label>
+            <span id="canary-split-display" style="font-family:var(--mono); color:var(--cyan); font-weight:700; font-size:0.9rem;">20% Canary / 80% Primary</span>
+          </div>
+          <input type="range" id="canary-weight-slider" min="1" max="99" value="20" style="width:100%; accent-color:var(--cyan);" oninput="updateCanaryWeightDisplay(this.value)">
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button class="btn btn-cyan" onclick="saveCanaryConfig()" style="width:auto;">💾 Save Canary Rule</button>
+          <button class="btn btn-ghost" onclick="disableCanaryConfig()" style="width:auto;">⏹ Disable Canary</button>
+          <span id="canary-status-pill" style="font-size:0.78rem; color:var(--muted); font-family:var(--mono);">Status: Ready</span>
+        </div>
+      </div>
+
+      <!-- Shadow / Dark Launch Routing Section -->
+      <div class="section-hdr" style="margin-top:24px">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-title">👤 Shadow (Dark Launch) Routing</div>
+          <span style="font-size:0.72rem; padding:2px 8px; border-radius:6px; background:rgba(0,212,255,0.15); color:var(--cyan); border:1px solid rgba(0,212,255,0.3);">NON-BLOCKING</span>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" onclick="loadShadowConfig()">🔄 Refresh Shadow Log</button>
+          <button class="btn btn-sm btn-ghost" onclick="clearShadowHistory()">🗑️ Clear Log</button>
+        </div>
+      </div>
+      <div class="card-wrap">
+        <div style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">
+          Duplicate real production requests asynchronously to a shadow model without affecting user response latency. Compares output quality, token usage, and latency behind the scenes.
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:6px;">Primary Target Model (optional filter)</label>
+            <input type="text" id="shadow-primary-model" placeholder="e.g. openai/gpt-4o (blank = all models)" style="font-family:var(--mono); margin-bottom:0;">
+          </div>
+          <div>
+            <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:6px;">Shadow Target Model</label>
+            <input type="text" id="shadow-target-model" placeholder="e.g. deepseek/deepseek-r1 or mock/deepseek-r1" style="font-family:var(--mono); margin-bottom:0;">
+          </div>
+          <div>
+            <label style="font-size:0.78rem; color:var(--muted); display:block; margin-bottom:6px;">Sample Rate (%)</label>
+            <input type="number" id="shadow-sample-rate" min="1" max="100" value="100" style="font-family:var(--mono); margin-bottom:0;">
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;">
+          <button class="btn btn-cyan" onclick="saveShadowConfig()" style="width:auto;">💾 Save Shadow Rule</button>
+          <button class="btn btn-ghost" onclick="disableShadowConfig()" style="width:auto;">⏹ Disable Shadow</button>
+          <span id="shadow-status-pill" style="font-size:0.78rem; color:var(--muted); font-family:var(--mono);">Status: Inactive</span>
+        </div>
+        <div tabindex="0" role="region" aria-label="Shadow routing comparison history" style="overflow-x:auto; max-height:220px; border-top:1px solid var(--border); padding-top:10px;">
+          <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:0.78rem;">
+            <thead style="position:sticky; inset-block-start:0; z-index:1; background:#0d0f22;">
+              <tr style="text-align:left; color:var(--muted); border-bottom:1px solid var(--border);">
+                <th style="padding:6px 8px;">Trace ID</th>
+                <th style="padding:6px 8px;">Primary vs Shadow</th>
+                <th style="padding:6px 8px;">Latency Delta</th>
+                <th style="padding:6px 8px;">Tokens</th>
+                <th style="padding:6px 8px;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="shadow-history-tbody">
+              <tr><td colspan="5" style="text-align:center; padding:12px; color:var(--muted);">No shadow executions recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Routing Topology Graph -->
+      <div class="section-hdr" style="margin-top:24px">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-title">🕸️ Live Routing Architecture Topology</div>
+          <span style="font-size:0.72rem; padding:2px 8px; border-radius:6px; background:rgba(124,111,255,0.15); color:var(--primary); border:1px solid rgba(124,111,255,0.3);">GRAPH VIEW</span>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" onclick="loadRouterTopology()">🔄 Refresh Topology</button>
+        </div>
+      </div>
+      <div class="card-wrap" id="router-topology-container" style="font-size:0.82rem; color:var(--muted);">
+        Loading live routing topology...
+      </div>
+
+      <div class="section-hdr" style="margin-top:24px">
+        <div class="section-title">Universal Model Aliasing</div>
+        <input type="text" id="aliases-search" placeholder="🔍 Filter aliases..." style="max-width:180px; margin-bottom:0 !important; margin-left: 16px; font-size:0.8rem; padding:6px 12px;" class="search-input" oninput="filterAliases()">
+        <div class="section-actions">
+          <button class="btn btn-sm btn-cyan" onclick="openAliasModal()">+ Add Alias</button>
+        </div>
+      </div>
+      <div class="card-wrap" id="aliases-container">
+        <div class="loading-row"><div class="spinner"></div> Loading aliases...</div>
+      </div>
+
+      <div class="section-hdr" style="margin-top:24px">
+        <div class="section-title">Fallback Routing</div>
+        <input type="text" id="routing-search" placeholder="🔍 Filter rules..." style="max-width:180px; margin-bottom:0 !important; margin-left: 16px; font-size:0.8rem; padding:6px 12px;" class="search-input" oninput="filterRoutingRules()">
+        <div class="section-actions">
+          <button class="btn btn-sm btn-cyan" onclick="openFallbackModal()">+ Add Rule</button>
+        </div>
+      </div>
+      <div class="card-wrap" id="fallback-container">
+        <div class="loading-row"><div class="spinner"></div> Loading routes...</div>
+      </div>
+
+      
+      <!-- ── Gateway Transformation & Middleware Pipeline (Envoy & Bifrost) ── -->
+      <div class="section-hdr" style="margin-top:28px">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-title">🎛️ Transformation &amp; Middleware Pipeline</div>
+          <span style="font-size:0.72rem; padding:2px 8px; border-radius:6px; background:rgba(0,255,157,0.15); color:var(--green); border:1px solid rgba(0,255,157,0.3);">ENVOY &amp; BIFROST ENGINE</span>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-cyan" onclick="openAddTransformModal()">+ Add Transform Rule</button>
+        </div>
+      </div>
+      <div class="card-wrap">
+        <div style="font-size:0.85rem; color:var(--muted); margin-bottom:14px;">
+          Automatically rewrite model names on the fly, inject upstream request headers, strip provider fingerprinting headers, and redact sensitive keywords or company secrets in LLM responses.
+        </div>
+
+        <!-- Rules Table -->
+        <div style="overflow-x:auto; margin-bottom: 20px;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border); text-align:left; color:var(--muted); font-size:0.75rem;">
+                <th style="padding:8px 10px;">Rule Name</th>
+                <th style="padding:8px 10px;">Type</th>
+                <th style="padding:8px 10px;">Match Pattern</th>
+                <th style="padding:8px 10px;">Target / Replacement</th>
+                <th style="padding:8px 10px;">Status</th>
+                <th style="padding:8px 10px; text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transform-rules-table-body">
+              <tr><td colspan="6" style="text-align:center; padding:16px; color:var(--muted);">Loading transformation rules...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Interactive Testing Sandbox -->
+        <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+          <div style="font-size:0.82rem; font-weight:700; color:var(--text); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>🧪</span> Interactive Transformation Sandbox
+          </div>
+          <div style="font-size:0.78rem; color:var(--muted); margin-bottom:12px;">
+            Verify how your transformation rules execute in real time before sending live production traffic.
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Test Rule Type</label>
+              <select id="sandbox-test-type" style="margin-bottom:0; font-size:0.8rem;">
+                <option value="model">Model Remap (e.g. gpt-3.5*)</option>
+                <option value="redact">Response Keyword Redaction</option>
+                <option value="header_inject">Request Header Injection</option>
+                <option value="header_strip">Response Header Stripping</option>
+              </select>
+            </div>
+            <div style="grid-column: span 2;">
+              <label style="font-size:0.75rem; color:var(--muted); display:block; margin-bottom:4px;">Test Input Value</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="sandbox-test-input" placeholder="e.g. gpt-3.5-turbo or ProjectTitan confidential report" style="margin-bottom:0; font-family:var(--mono); font-size:0.8rem; flex:1;">
+                <button class="btn btn-sm btn-cyan" onclick="runTransformSandboxTest()">Test Transform</button>
+              </div>
+            </div>
+          </div>
+          <div id="sandbox-test-result" style="display:none; background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:8px; padding:10px; font-family:var(--mono); font-size:0.8rem; color:var(--cyan);"></div>
+        </div>
+      </div>
+
+<!-- ── Provider Latency Matrix & SLA Health Monitor (Glide & Bifrost) ── -->
+      <div class="section-hdr" style="margin-top:28px">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-title">⚡ Latency Matrix &amp; SLA Monitor</div>
+          <span style="font-size:0.72rem; padding:2px 8px; border-radius:6px; background:rgba(0,212,255,0.15); color:var(--cyan); border:1px solid rgba(0,212,255,0.3);">P50 / P95 TELEMETRY</span>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" id="probe-matrix-btn" onclick="probeAllMatrixLatencies(this)">⚡ Probe All Latencies</button>
+        </div>
+      </div>
+      <div class="card-wrap" id="latency-matrix-card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <span>Continuous rolling window latency distribution and real-time SLA availability monitoring across all upstream inference endpoints.</span>
+          <span id="matrix-last-updated" style="font-family: var(--mono); font-size: 0.75rem; color: var(--cyan);">Live</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border); text-align:left; color:var(--muted); font-size:0.75rem; background:rgba(0,0,0,0.25);">
+                <th style="padding:10px 14px;">Provider</th>
+                <th style="padding:10px 14px;">Status / SLA</th>
+                <th style="padding:10px 14px;">EWMA Latency</th>
+                <th style="padding:10px 14px;">Median (p50)</th>
+                <th style="padding:10px 14px;">Tail (p95)</th>
+                <th style="padding:10px 14px;">Min / Max</th>
+                <th style="padding:10px 14px;">Recent History</th>
+              </tr>
+            </thead>
+            <tbody id="latency-matrix-table-body">
+              <tr><td colspan="7" style="text-align:center; padding:16px; color:var(--muted);">Loading latency matrix...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sentinel Circuit Breaker Health Monitor -->
+      <div class="section-hdr" style="margin-top:24px">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-title">🛡️ Sentinel Circuit Breakers &amp; Key Health</div>
+          <span style="font-size:0.72rem; padding:2px 8px; border-radius:6px; background:rgba(0,255,157,0.12); color:var(--green); border:1px solid rgba(0,255,157,0.25);">SELF-HEALING</span>
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" id="btn-refresh-cb" onclick="loadCircuitBreakerStatus()">🔄 Refresh Status</button>
+          <button class="btn btn-sm btn-cyan" id="btn-reset-all-cb" onclick="resetAllCircuitBreakers()">⚡ Reset All Breakers</button>
+        </div>
+      </div>
+      <div class="card-wrap" id="cb-monitor-card" style="padding: 0; overflow: hidden; margin-bottom: 24px;">
+        <div style="padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); display:flex; justify-content:space-between; align-items:center;">
+          <span>Automated circuit breaking, sliding-window failure protection, and half-open probe recovery per provider key.</span>
+          <span id="cb-last-checked" style="font-family: var(--mono); font-size: 0.75rem; color: var(--green);">Active</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border); text-align:left; color:var(--muted); font-size:0.75rem; background:rgba(0,0,0,0.25);">
+                <th style="padding:10px 14px;">Provider</th>
+                <th style="padding:10px 14px;">Key Hint</th>
+                <th style="padding:10px 14px;">Status</th>
+                <th style="padding:10px 14px;">Circuit State</th>
+                <th style="padding:10px 14px;">Failure Rate</th>
+                <th style="padding:10px 14px;">Trips</th>
+                <th style="padding:10px 14px;">Cooldown Remaining</th>
+                <th style="padding:10px 14px; text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cb-table-body">
+              <tr><td colspan="8" style="text-align:center; padding:16px; color:var(--muted);">Loading circuit breaker states...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    

@@ -1,9 +1,9 @@
 import os
-from llmcycle import LLMCycle, RoutingStrategy
+from veloroute import VeloRoute, RoutingStrategy
 
-# Initialize LLMCycle client
-# It automatically loads provider keys from .env or environment variables
-client = LLMCycle(
+# Initialize VeloRoute client
+# Automatically loads provider keys from .env or environment variables
+client = VeloRoute(
     env_path=".env",
     strategy=RoutingStrategy.PRIORITY,
     # Example fallback mapping: if gpt-4o fails, fall back to claude-3-5-sonnet or gemini-1.5-pro
@@ -13,6 +13,6 @@ client = LLMCycle(
     auto_trim_context=True,
 )
 
-print("LLMCycle client initialized successfully!")
+print("VeloRoute client initialized successfully!")
 print(f"Active routing strategy: {client.router.strategy}")
 print(f"Loaded providers: {client.get_providers()}")

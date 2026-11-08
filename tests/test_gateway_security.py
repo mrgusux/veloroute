@@ -11,12 +11,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from starlette.requests import Request
 from starlette.testclient import TestClient
 
-from llmcycle.gateway.keys import GatewayAuthError, VirtualKeyManager
-from llmcycle.core.errors import RateLimitError
-from llmcycle.schema import CompletionResponse
-from llmcycle.ui.app import app
-from llmcycle.ui.routes.deps import SESSION_TOKEN, llm_client
-from llmcycle.ui.routes.proxy import openai_proxy_chat_completions
+from veloroute.gateway.keys import GatewayAuthError, VirtualKeyManager
+from veloroute.core.errors import RateLimitError
+from veloroute.schema import CompletionResponse
+from veloroute.ui.app import app
+from veloroute.ui.routes.deps import SESSION_TOKEN, llm_client
+from veloroute.ui.routes.proxy import openai_proxy_chat_completions
 
 
 class TestVirtualKeyReservations(unittest.IsolatedAsyncioTestCase):
@@ -188,7 +188,7 @@ class TestStreamingGatewayCancellation(unittest.IsolatedAsyncioTestCase):
             joined = "".join(frames)
             self.assertIn('"error"', joined)
             self.assertIn('"type": "RateLimitError"', joined)
-            self.assertNotIn("[LLMCycle Proxy Error]", joined)
+            self.assertNotIn("[VeloRoute Proxy Error]", joined)
             self.assertIn("data: [DONE]", joined)
         finally:
             llm_client.virtual_keys = original_manager
@@ -432,8 +432,8 @@ class TestVirtualKeyGateway(unittest.TestCase):
         with patch.dict(
             os.environ,
             {
-                "LLMCYCLE_USER_ADMIN": "test-admin",
-                "LLMCYCLE_USER_ADMIN_PASSWORD": "test-secret",
+                "VELOROUTE_USER_ADMIN": "test-admin",
+                "VELOROUTE_USER_ADMIN_PASSWORD": "test-secret",
             },
         ):
             response = self.client.post(

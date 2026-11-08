@@ -8,14 +8,14 @@ from pathlib import Path
 # Ensure package is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from llmcycle.core.keys import KeyManager, KeyStatus
-from llmcycle.core.router import ModelRouter, RoutingStrategy
-from llmcycle.core.stream import RetryPolicy, SmartRetryState
-from llmcycle.client import LLMCycle
-from llmcycle.schema import EmbeddingRequest, EmbeddingResponse, EmbeddingData, EmbeddingUsage
+from veloroute.core.keys import KeyManager, KeyStatus
+from veloroute.core.router import ModelRouter, RoutingStrategy
+from veloroute.core.stream import RetryPolicy, SmartRetryState
+from veloroute.client import VeloRoute
+from veloroute.schema import EmbeddingRequest, EmbeddingResponse, EmbeddingData, EmbeddingUsage
 from starlette.testclient import TestClient
-from llmcycle.ui.app import app
-from llmcycle.ui.routes.deps import SESSION_TOKEN, llm_client
+from veloroute.ui.app import app
+from veloroute.ui.routes.deps import SESSION_TOKEN, llm_client
 
 
 class TestCircuitBreaker(unittest.TestCase):
@@ -198,7 +198,7 @@ class TestIntelligentLoadBalancing(unittest.TestCase):
 class TestUniversalModelAliasing(unittest.TestCase):
     def setUp(self):
         self.router = ModelRouter()
-        self.client = LLMCycle()
+        self.client = VeloRoute()
 
     def test_alias_registration_and_resolution(self):
         self.client.alias("smart", "openai/gpt-4o")
@@ -220,7 +220,7 @@ class TestUniversalModelAliasing(unittest.TestCase):
 
 class TestEmbeddingsAndAudio(unittest.IsolatedAsyncioTestCase):
     async def test_embed_mock_routing(self):
-        client = LLMCycle()
+        client = VeloRoute()
         client.add_provider("mockemb", ["sk-mock-key"], base_url="https://api.mockemb.com/v1")
         
         # Verify EmbeddingRequest serialization
@@ -252,7 +252,7 @@ class TestEmbeddingsAndAudio(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(req2.to_api_dict()["input"]), 2)
 
     async def test_bare_model_embedding_and_audio_routing(self):
-        client = LLMCycle()
+        client = VeloRoute()
         client.add_provider("openai", ["sk-mock-key"], base_url="https://api.openai.com/v1")
         
         # Test routing for bare models
@@ -327,7 +327,7 @@ class TestProxyAndDashboardAPI(unittest.TestCase):
 
 class TestInferredRoutingAndWeighted(unittest.TestCase):
     def test_bare_model_inferred_routing(self):
-        client = LLMCycle()
+        client = VeloRoute()
         client.add_provider("openai", ["sk-oa"])
         client.add_provider("anthropic", ["sk-ant"])
         

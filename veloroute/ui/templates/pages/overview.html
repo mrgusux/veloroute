@@ -1,0 +1,140 @@
+<!-- ── OVERVIEW ───────────────────────────────── -->
+    <div id="page-overview" class="page active">
+            <!-- Gateway Base URL Banner -->
+      <div style="background: linear-gradient(135deg, rgba(124, 111, 255, 0.12), rgba(0, 212, 255, 0.08)); border: 1px solid rgba(124, 111, 255, 0.3); border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span style="background: var(--primary); color: #fff; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">VeloRoute Gateway Base URL</span>
+          <span style="font-size: 0.85rem; color: var(--text);">Connect OpenCode / Cursor / Continue / SDK to VeloRoute:</span>
+          <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); border: 1px solid var(--border2); padding: 4px 10px; border-radius: 6px;">
+            <code style="font-family: var(--mono); font-size: 0.88rem; color: var(--cyan); font-weight: 600;">http://127.0.0.1:8000/v1</code>
+            <button type="button" id="btn-copy-base-url" class="btn btn-sm btn-ghost" style="padding: 1px 6px; font-size: 0.75rem; color: var(--cyan); border: 1px solid rgba(0,212,255,0.3);" onclick="copyToClipboard((window.location.origin &amp;&amp; window.location.origin !== 'null' ? window.location.origin : 'http://127.0.0.1:8000') + '/v1', 'Base URL copied: ' + (window.location.origin &amp;&amp; window.location.origin !== 'null' ? window.location.origin : 'http://127.0.0.1:8000') + '/v1')">📋 Copy</button>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="btn btn-sm btn-cyan" style="font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 12px rgba(0,212,255,0.25);" onclick="openConnectModal()">🔌 Connect IDE / SDK</button>
+          <button class="btn btn-sm btn-ghost" style="font-size: 0.75rem; color: var(--green); border: 1px solid rgba(0,255,157,0.3);" onclick="showPage('guardrails', document.getElementById('nav-guardrails'))">🛡️ Guardrails</button>
+          <button class="btn btn-sm btn-ghost" style="font-size: 0.75rem; color: #a78bfa; border: 1px solid rgba(167,139,250,0.3);" onclick="showPage('cache', document.getElementById('nav-cache'))">🧠 Semantic Cache</button>
+          <button class="btn btn-sm btn-ghost" style="font-size: 0.75rem; color: var(--cyan); border: 1px solid rgba(0,212,255,0.3);" onclick="showPage('mcp', document.getElementById('nav-mcp'))">⚡ MCP Gateway</button>
+          <button class="btn btn-sm btn-ghost" style="font-size: 0.75rem; color: var(--primary); border: 1px solid var(--border);" onclick="switchPage('keys')">🔑 Virtual Keys &rarr;</button>
+        </div>
+      </div>
+
+      <div class="stats-row" id="stats-row" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px;">
+        <div class="stat-card">
+          <div class="stat-icon">🏢</div>
+          <div class="stat-info">
+            <div class="stat-value" id="s-providers">—</div>
+            <div class="stat-label">Active Providers</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔑</div>
+          <div class="stat-info">
+            <div class="stat-value" id="s-keys">—</div>
+            <div class="stat-label">Active Keys</div>
+          </div>
+        </div>
+        <div class="stat-card" style="cursor: pointer;" onclick="showPage('guardrails', document.getElementById('nav-guardrails'))" title="Click to view Guardrails Center">
+          <div class="stat-icon">🛡️</div>
+          <div class="stat-info">
+            <div class="stat-value text-sm" style="color: var(--green);">Active</div>
+            <div class="stat-label">PII &amp; Injection</div>
+          </div>
+        </div>
+        <div class="stat-card" style="cursor: pointer;" onclick="showPage('cache', document.getElementById('nav-cache'))" title="Click to view Semantic Cache Hub">
+          <div class="stat-icon">🧠</div>
+          <div class="stat-info">
+            <div class="stat-value text-sm" id="s-cache-hit-rate" style="color: #a78bfa;">Active</div>
+            <div class="stat-label">Semantic Cache</div>
+          </div>
+        </div>
+        <div class="stat-card" style="cursor: pointer;" onclick="showPage('mcp', document.getElementById('nav-mcp'))" title="Click to view MCP Gateway Explorer">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-info">
+            <div class="stat-value text-sm" style="color: var(--cyan);">Ready</div>
+            <div class="stat-label">MCP Gateway</div>
+          </div>
+        </div>
+        <div class="stat-card" style="cursor: pointer;" onclick="showPage('routing', document.getElementById('nav-routing'))" title="Click to configure Routing">
+          <div class="stat-icon">🔀</div>
+          <div class="stat-info">
+            <div class="stat-value text-sm" style="color: #c084fc;">Canary / Shadow</div>
+            <div class="stat-label">Traffic Engineering</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="s-tripped-keys">0</div>
+            <div class="stat-label">Tripped Keys</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🛣️</div>
+          <div class="stat-info">
+            <div class="stat-value" id="s-routes">—</div>
+            <div class="stat-label">Fallback Routes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🧠</div>
+          <div class="stat-info">
+            <div class="stat-value text-sm" id="s-strategy">—</div>
+            <div class="stat-label">Strategy</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🗄️</div>
+          <div class="stat-info">
+            <div class="stat-value text-sm" id="s-storage">—</div>
+            <div class="stat-label">Storage Backend</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🧩</div>
+          <div class="stat-info">
+            <div class="stat-value" id="s-groups">—</div>
+            <div class="stat-label">Routing Groups</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Providers -->
+      <div class="section-hdr">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="section-title">Active Providers</div>
+          <div class="section-count" id="providers-count">0</div>
+          <input type="text" id="overview-search" placeholder="🔍 Filter active providers..." style="max-width:180px; margin-bottom:0 !important; margin-left: 16px; font-size:0.8rem; padding:6px 12px;" class="search-input" oninput="filterOverviewProviders()">
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-sm btn-ghost" id="reset-circuit-btn" onclick="resetAllCircuitBreakers(this)" title="Reset all tripped, exhausted, or rate-limited keys back to Active">🔄 Reset Keys</button>
+          <button class="btn btn-sm btn-ghost" id="ping-all-btn" onclick="pingAllProviders(this)" title="Probe latency and health for all configured providers">⚡ Ping All</button>
+          <button class="btn btn-sm btn-ghost" onclick="refreshDashboard()">🔄 Refresh</button>
+          <button class="btn btn-sm btn-cyan" onclick="openAddModal()">+ Add Provider</button>
+        </div>
+      </div>
+      <div id="env-detected-banner" style="display: none;"></div>
+      <div class="providers-grid" id="providers-grid">
+        <div class="loading-row"><div class="spinner"></div> Loading providers...</div>
+      </div>
+
+      <!-- Proxy Settings Section -->
+      <div class="section-hdr" style="margin-top: 36px;">
+        <div class="section-title">VeloRoute Proxy Configuration</div>
+      </div>
+      <div class="card-wrap" style="max-width: 680px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-size: 0.85rem; color: var(--muted)">
+          Configure an egress HTTP/HTTPS proxy URL. All outgoing network requests from VeloRoute to LLM providers (e.g. models fetching, completions, streams) will route through this proxy server.
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="proxy-url-input" placeholder="e.g. http://127.0.0.1:8080" style="margin-bottom: 0; font-family: var(--mono); flex: 1; min-width: 250px;">
+          <button class="btn btn-cyan" style="width: auto;" onclick="updateProxySettings()">Save Proxy</button>
+          <button class="btn btn-ghost" style="width: auto;" onclick="clearProxySettings()">Clear</button>
+        </div>
+        <div id="proxy-status-message" style="font-size: 0.78rem; font-family: var(--mono); color: var(--muted)">
+          Proxy is currently disabled.
+        </div>
+      </div>
+    </div>
+
+    
