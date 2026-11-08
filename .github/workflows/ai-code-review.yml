@@ -34,27 +34,36 @@ jobs:
         shell: bash
         run: |
           python -c '
-          import os, subprocess, json, re
+          import os, subprocess, json, re, ast
 
-          # Get PR diff files
+          # Resilient PR diff file retrieval
           base_ref = os.getenv("GITHUB_BASE_REF", "main")
-          try:
-              changed_files = subprocess.check_output(
-                  ["git", "diff", "--name-only", f"origin/{base_ref}...HEAD"],
-                  text=True
-              ).splitlines()
-          except Exception:
-              changed_files = []
+          changed_files = []
+          for cmd in [
+              ["git", "diff", "--name-only", f"origin/{base_ref}...HEAD"],
+              ["git", "diff", "--name-only", f"{base_ref}...HEAD"],
+              ["git", "diff", "--name-only", "HEAD~1...HEAD"]
+          ]:
+              try:
+                  out = subprocess.check_output(cmd, text=True).splitlines()
+                  if out:
+                      changed_files = out
+                      break
+              except Exception:
+                  continue
 
           findings = []
-          secret_pattern = re.compile(r"""(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{20,}|AIza[0-9A-Za-z-_]{35}|bearer\s+[a-zA-Z0-9_\-\.]{25,})""", re.IGNORECASE)
-          blocking_pattern = re.compile(r"""^\s*async\s+def\s+.*?(time\.sleep|requests\.get|requests\.post)""", re.MULTILINE)
+          secret_pattern = re.compile(
+              r"""(sk-(?:proj-|ant-)?[a-zA-Z0-9_\-]{20,}|ghp_[a-zA-Z0-9]{20,}|AIza[0-9A-Za-z-_]{35}|bearer\s+[a-zA-Z0-9_\-\.]{25,})""",
+              re.IGNORECASE
+          )
           todo_placeholder = re.compile(r"""(TODO|FIXME|placeholder):?\s*implement""", re.IGNORECASE)
+          blocking_calls = {"time.sleep", "sleep", "requests.get", "requests.post", "requests.put", "requests.delete", "requests.patch", "requests.request", "urllib.request.urlopen"}
 
           for f in changed_files:
               if not os.path.isfile(f):
                   continue
-              # Ignore vendor/reference files
+              # Ignore vendor/reference/test directories for secret scan
               if any(ignored in f for ignored in ["reference_repos", "node_modules", ".venv", ".git"]):
                   continue
 
@@ -63,13 +72,28 @@ jobs:
 
               # 1. Check for committed raw secrets
               matches = secret_pattern.findall(content)
-              if matches and "test" not in f:
+              if matches and "test" not in f.lower():
                   findings.append(f"⚠️ **Secret Exposure Warning**: Potential hardcoded credential pattern found in `{f}`")
 
-              # 2. Check for blocking synchronous calls in async definitions
+              # 2. Check for blocking synchronous calls in async definitions via AST
               if f.endswith(".py"):
-                  if blocking_pattern.search(content):
-                      findings.append(f"❌ **Async Concurrency Issue**: Blocking synchronous call detected inside `async def` in `{f}`. Use async equivalents or `asyncio.to_thread`.")
+                  try:
+                      tree = ast.parse(content, filename=f)
+                      for node in ast.walk(tree):
+                          if isinstance(node, ast.AsyncFunctionDef):
+                              for child in ast.walk(node):
+                                  if isinstance(child, ast.Call):
+                                      call_name = None
+                                      if isinstance(child.func, ast.Attribute) and isinstance(child.func.value, ast.Name):
+                                          call_name = f"{child.func.value.id}.{child.func.attr}"
+                                      elif isinstance(child.func, ast.Name):
+                                          call_name = child.func.id
+                                      if call_name in blocking_calls:
+                                          findings.append(
+                                              f"❌ **Async Concurrency Issue**: Blocking call `{call_name}()` detected inside `async def {node.name}()` (line {child.lineno}) in `{f}`. Use async equivalents or `asyncio.to_thread`."
+                                          )
+                  except SyntaxError:
+                      pass
 
               # 3. Check for unfinished placeholder slop
               if todo_placeholder.search(content):
@@ -92,7 +116,7 @@ jobs:
               out.write(report)
           '
 
-      - name: Post PR Review Comment
+      - name: Post PR Review Comment & Summary
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
         with:
@@ -100,44 +124,51 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('review_report.md', 'utf8');
-            
-            // Check for existing automated comment to update instead of spamming
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            
-            const botComment = comments.find(c => c.body.includes('🤖 VeloRoute Automated Code Review'));
-            
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: report
-              });
-            } else {
-              await github.rest.issues.createComment({
+
+            // 1. Always append to GitHub Actions step summary
+            if (process.env.GITHUB_STEP_SUMMARY) {
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report);
+            }
+
+            // 2. Try to post or update PR comment, catching any fork permission errors gracefully
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: report
               });
+
+              const botComment = comments.find(c => c.body && c.body.includes('🤖 VeloRoute Automated Code Review'));
+
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: report
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: report
+                });
+              }
+            } catch (err) {
+              core.warning(`Could not post PR review comment (e.g. fork token permissions): ${err.message}`);
             }
 
   # Deep LLM Reviewer via Qodo PR-Agent (activated when OPENAI_API_KEY or ANTHROPIC_API_KEY is configured)
   pr-agent:
     name: Qodo AI PR-Agent Review
     runs-on: ubuntu-latest
-    if: ${{ env.OPENAI_API_KEY != '' || env.ANTHROPIC_API_KEY != '' }}
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    if: ${{ secrets.OPENAI_API_KEY != '' || secrets.ANTHROPIC_API_KEY != '' }}
     steps:
       - name: Run Qodo PR-Agent
         uses: qodo-ai/pr-agent-action@v0.22
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           PR_REVIEWER_EXTRA_INSTRUCTIONS: "Adhere to Next.js 15+ App Router, Python Async FastAPI, and OWASP Zero-Trust rules described in AGENTS.md"

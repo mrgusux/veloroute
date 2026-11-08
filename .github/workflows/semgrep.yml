@@ -20,22 +20,30 @@ jobs:
   semgrep:
     name: Semgrep SAST Scan
     runs-on: ubuntu-latest
-    container:
-      image: semgrep/semgrep
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run Semgrep Security Scan
         run: |
-          semgrep scan \
+          docker run --rm \
+            -v "${{ github.workspace }}:/src" \
+            semgrep/semgrep semgrep scan \
             --config "p/default" \
             --config "p/owasp-top-ten" \
             --config "p/python" \
             --config "p/javascript" \
             --config "p/typescript" \
+            --sarif \
+            --output /src/semgrep.sarif \
             --error \
             --exclude "reference_repos" \
             --exclude "website/node_modules" \
             --exclude ".venv" \
             --exclude "veloroute.egg-info"
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
