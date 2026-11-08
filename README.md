@@ -6,6 +6,9 @@
 
 [![CI](https://github.com/mrgusux/veloroute/actions/workflows/ci.yml/badge.svg)](https://github.com/mrgusux/veloroute/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/downloads/)
+[![Docker Ready](https://img.shields.io/badge/docker-multi--stage%20slim-2496ED.svg?logo=docker&logoColor=white)](https://github.com/mrgusux/veloroute)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmrgusux%2Fveloroute&root-directory=website)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15%20App%20Router-black.svg?logo=nextdotjs&logoColor=white)](https://github.com/mrgusux/veloroute/tree/main/website)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests Passing](https://img.shields.io/badge/tests-219%20passed-brightgreen.svg)](https://github.com/mrgusux/veloroute)
@@ -15,7 +18,8 @@
 
 *A blazingly fast, multi-provider AI gateway engineered for production reliability, radical token cost reduction, instant mid-stream failover, and zero vendor lock-in.*
 
-[Key Features](#key-features) • [Architecture](#architecture) • [Quickstart](#quickstart) • [SDK Integration](#sdk-integration) • [Routing Strategies](#routing-strategies) • [CLI & Dashboard](#cli--dashboard) • [Configuration](#configuration) • [Testing](#testing)
+[Landing Page](website/) • [Key Features](#key-features) • [Architecture](#architecture) • [Docker & K8s Quickstart](#docker--kubernetes-quickstart) • [Local Quickstart](#local-python-quickstart) • [SDK Integration](#sdk-integration) • [Routing Strategies](#routing-strategies) • [CLI & Dashboard](#cli--dashboard)
+
 
 </div>
 
@@ -115,7 +119,80 @@ With its built-in **Token-Saviour Suite**, VeloRoute drastically cuts inference 
 
 ## 📦 Quickstart
 
-### 1. Installation
+### 🐳 Option A: 1-Command Docker Run (Fastest)
+
+Launch the gateway and live web dashboard instantly using the multi-stage unprivileged Docker image:
+
+```bash
+docker run -d \
+  --name veloroute \
+  -p 8000:8000 \
+  -v veloroute_data:/data \
+  -e OPENAI_API_KEY="sk-..." \
+  -e ANTHROPIC_API_KEY="sk-ant-..." \
+  ghcr.io/mrgusux/veloroute:latest
+```
+
+The gateway and dashboard are now live at **`http://localhost:8000`** with automated healthcheck probes on `/health`.
+
+---
+
+### 🐳 Option B: Docker Compose (Production Ready)
+
+Clone the repository and launch with volume persistence and auto-restart:
+
+```bash
+git clone https://github.com/mrgusux/veloroute.git
+cd veloroute
+cp .env.example .env
+# Edit .env with your provider API keys
+docker compose up -d
+```
+
+View container logs and status:
+```bash
+docker compose ps
+docker compose logs -f
+```
+
+---
+
+### ☸️ Option C: Enterprise Kubernetes
+
+Deploy VeloRoute to your Kubernetes cluster (EKS, GKE, AKS, or bare-metal):
+
+```bash
+# Apply ConfigMap, PVC, Deployment, and Service
+kubectl apply -f deploy/k8s/
+```
+
+Verify pod health:
+```bash
+kubectl get pods -l app.kubernetes.io/name=veloroute
+kubectl get svc veloroute
+```
+
+---
+
+### ▲ Option D: Next.js Landing Page on Vercel
+
+The production Next.js landing page lives in `website/` and is optimized for free instant Vercel deployment:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmrgusux%2Fveloroute&root-directory=website)
+
+Or run locally:
+```bash
+cd website
+npm install
+npm run dev
+# Open http://localhost:3000
+```
+
+---
+
+### 🐍 Option E: Local Python Quickstart
+
+#### 1. Installation
 
 ```bash
 # Clone the repository
@@ -129,11 +206,11 @@ python -m venv .venv
 # Linux / macOS:
 source .venv/bin/activate
 
-# Install dependencies
+# Install dependencies in editable mode
 pip install -e .
 ```
 
-### 2. Configure Environment
+#### 2. Configure Environment
 
 Copy the example configuration:
 
@@ -150,7 +227,7 @@ GROQ_API_KEYS=gsk-...
 GEMINI_API_KEYS=AIzaSy...
 ```
 
-### 3. Launch VeloRoute
+#### 3. Launch VeloRoute
 
 Start the UI and Gateway Server:
 
@@ -159,6 +236,7 @@ veloroute ui --host 127.0.0.1 --port 8000
 ```
 
 *(On Windows, you can simply double-click `menu.bat` or `dashboard.bat`)*
+
 
 Dashboard will be live at: **`http://127.0.0.1:8000`**
 

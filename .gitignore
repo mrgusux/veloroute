@@ -80,3 +80,11 @@ reference_repos/
 *.sublime-workspace
 .DS_Store
 Thumbs.db
+
+# Web frontend & Next.js
+website/node_modules/
+website/.next/
+website/out/
+website/.vercel/
+website/*.tsbuildinfo
+

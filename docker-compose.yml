@@ -1,0 +1,37 @@
+services:
+  veloroute:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/mrgusux/veloroute:latest
+    container_name: veloroute
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - VELOROUTE_UI_HOST=0.0.0.0
+      - VELOROUTE_UI_PORT=8000
+      - VELOROUTE_STORAGE_BACKEND=sqlite
+      - VELOROUTE_STORAGE_URL=sqlite+aiosqlite:////data/veloroute.db
+      - VELOROUTE_SESSION_TOKEN=${VELOROUTE_SESSION_TOKEN:-}
+      - VELOROUTE_VIEWER_TOKEN=${VELOROUTE_VIEWER_TOKEN:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - COHERE_API_KEY=${COHERE_API_KEY:-}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    volumes:
+      - veloroute_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).getcode() == 200 else 1)\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  veloroute_data:
+    name: veloroute_data
