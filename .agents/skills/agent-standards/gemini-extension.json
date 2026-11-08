@@ -1,9 +1,0 @@
-{
-  "name": "agent-standards",
-  "version": "1.0.0",
-  "description": "Comprehensive engineering rules, architectural standards, and security guardrails synthesized from virastack/ai, awesome-cursorrules, and agentic-skills for Next.js 15+, React 19, Python Async FastAPI, and OWASP Top 10.",
-  "author": {
-    "name": "VeloRoute Core",
-    "url": "https://github.com/mrgusux/veloroute"
-  }
-}
