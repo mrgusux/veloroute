@@ -12,7 +12,8 @@ for root, _, files in os.walk("veloroute/ui/templates/pages"):
                 content = f.read()
             matches = re.findall(r"onclick=[\'\"]([a-zA-Z0-9_]+)\(", content)
             for m in matches:
-                onclicks.add(m)
+                if m not in {"if", "for", "while", "switch", "return"}:
+                    onclicks.add(m)
 
 print(f"Total onclick functions found in templates: {len(onclicks)}")
 

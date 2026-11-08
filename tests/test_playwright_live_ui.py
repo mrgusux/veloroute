@@ -1,11 +1,19 @@
 import asyncio
 import sys
-import re
-from playwright.async_api import async_playwright, expect
+try:
+    from playwright.async_api import async_playwright, expect
+    PLAYWRIGHT_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+    PLAYWRIGHT_AVAILABLE = False
+    async_playwright = None
+    expect = None
 
 sys.stdout.reconfigure(encoding="utf-8")
 
 async def run_live_verification():
+    if not PLAYWRIGHT_AVAILABLE:
+        print("[SKIP] Playwright is not installed. To run live UI tests, install: pip install playwright && playwright install chromium")
+        return
     console_errors = []
     page_errors = []
     failed_requests = []

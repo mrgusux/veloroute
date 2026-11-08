@@ -4,6 +4,7 @@
 
 **Enterprise Universal AI Gateway, High-Availability LLM Routing & Token-Saviour Optimization Engine**
 
+[![CI](https://github.com/mrgusux/veloroute/actions/workflows/ci.yml/badge.svg)](https://github.com/mrgusux/veloroute/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

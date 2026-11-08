@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include setup.py
+include transforms.json
+recursive-include veloroute/ui/templates *.html *.js *.css *.json *.svg *.png *.ico

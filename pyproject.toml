@@ -36,6 +36,9 @@ all = [
     "motor>=3.3",
     "redis>=5.0",
 ]
+dev = [
+    "playwright>=1.40",
+]
 
 [project.urls]
 Homepage = "https://github.com/mrgusux/veloroute"

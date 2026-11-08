@@ -29,4 +29,6 @@ missing_ids = [eid for eid in sorted(get_elem_ids) if eid not in all_ids]
 print(f"IDs queried in JS but missing in HTML: {len(missing_ids)}")
 for eid in missing_ids:
     print(f"  ⚠️ {eid}")
+if not missing_ids:
+    print("✅ All JS getElementById queries match valid HTML element IDs!")
 

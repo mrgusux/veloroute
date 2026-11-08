@@ -17,7 +17,11 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     package_data={
-        "veloroute": ["ui/templates/**/*", "ui/templates/*"],
+        "veloroute": [
+            "ui/templates/*.html",
+            "ui/templates/pages/*.html",
+            "ui/templates/**/*",
+        ],
     },
     install_requires=[
         "fastapi>=0.115.0",
@@ -37,6 +41,9 @@ setup(
             "asyncpg>=0.30",
             "motor>=3.3",
             "redis>=5.0",
+        ],
+        "dev": [
+            "playwright>=1.40",
         ],
     },
     entry_points={

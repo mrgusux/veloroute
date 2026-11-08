@@ -2673,7 +2673,7 @@ async function loadGuardrails() {
       const injChk = document.getElementById('gr-global-inj-enabled');
       if (injChk) injChk.checked = cfg.injection_protection !== false;
       const threshEl = document.getElementById('gr-inj-threshold');
-      const threshVal = document.getElementById('gr-inj-thresh-val') || document.getElementById('gr-inj-val');
+      const threshVal = document.getElementById('gr-inj-thresh-val');
       if (threshEl && cfg.injection_threshold !== undefined) {
         threshEl.value = cfg.injection_threshold;
         if (threshVal) threshVal.textContent = parseFloat(cfg.injection_threshold).toFixed(2);
@@ -4035,7 +4035,6 @@ function updatePrivacyUI(active) {
   privacyModeActive = active;
   const statusEl = document.getElementById('privacy-mode-status');
   const btnEl = document.getElementById('btn-privacy-toggle');
-  const grChk = document.getElementById('gr-privacy-mode');
   const grPill = document.getElementById('gr-privacy-pill');
 
   if (statusEl) {
@@ -4052,9 +4051,6 @@ function updatePrivacyUI(active) {
       btnEl.style.borderColor = 'var(--border)';
       btnEl.style.color = 'var(--muted)';
     }
-  }
-  if (grChk) {
-    grChk.checked = active;
   }
   if (grPill) {
     grPill.textContent = active ? 'Active' : 'Disabled';
@@ -4401,7 +4397,7 @@ function switchQuickstartTab(tabKey) {
     }
   });
 
-  const codeEl = document.getElementById('qs-code-block') || document.getElementById('quickstart-code');
+  const codeEl = document.getElementById('qs-code-block');
   if (codeEl) {
     const snippets = quickstartData && quickstartData.snippets ? quickstartData.snippets : {};
     let code = '';
@@ -4419,7 +4415,7 @@ function switchQuickstartTab(tabKey) {
 }
 
 function copyQuickstartSnippet() {
-  const codeEl = document.getElementById('qs-code-block') || document.getElementById('quickstart-code');
+  const codeEl = document.getElementById('qs-code-block');
   if (!codeEl || !codeEl.textContent) return;
   copyToClipboard(codeEl.textContent, 'Snippet copied to clipboard!');
 }
