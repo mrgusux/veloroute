@@ -9,7 +9,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/downloads/)
 [![Docker Ready](https://img.shields.io/badge/docker-multi--stage%20slim-2496ED.svg?logo=docker&logoColor=white)](https://github.com/mrgusux/veloroute)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmrgusux%2Fveloroute&root-directory=website)
-[![Next.js 15](https://img.shields.io/badge/Next.js-15%20App%20Router-black.svg?logo=nextdotjs&logoColor=white)](https://veloroute-tau.vercel.app)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16%20Turbopack-black.svg?logo=nextdotjs&logoColor=white)](https://veloroute-tau.vercel.app)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests Passing](https://img.shields.io/badge/tests-219%20passed-brightgreen.svg)](https://github.com/mrgusux/veloroute)

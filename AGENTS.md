@@ -19,7 +19,7 @@ This file follows the portable `AGENTS.md` specification for coding agents (Clau
 - **Gateway & Web UI**:
   - `veloroute/ui/app.py` & `veloroute/ui/routes/`: FastAPI OpenAI-compatible (`/v1/chat/completions`, `/v1/responses`, `/v1/embeddings`), Anthropic-compatible (`/v1/messages`), Gemini-compatible (`/v1beta/models/{model}:generateContent`), Ollama-compatible (`/api/chat`, `/api/generate`, `/api/tags`), and Admin REST API (`/api/v1/*`).
 - **Frontend Landing & Dashboard**:
-  - `website/`: Next.js 15+ App Router, React 19, Tailwind CSS 4, static prerendering.
+  - `website/`: Next.js 16+ App Router, React 19, Tailwind CSS 4, static prerendering.
 
 ## 2. Universal Agent Standards & Rule Map
 All coding agents operating on this repository must strictly adhere to the project's modular rules:
