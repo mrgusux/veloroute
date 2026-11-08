@@ -1,0 +1,44 @@
+---
+description: OWASP Top 10, Zero-Trust Security, and Secret Hygiene
+globs: ["**/*"]
+alwaysApply: false
+---
+
+# Security & OWASP Standards
+
+## 1. Secrets Management & Credential Hygiene
+- **Never Hardcode Secrets**: Never commit API keys, passwords, bearer tokens, private certificates, or environment configs containing live secrets to git.
+- **Environment Variables**: Read credentials strictly through environment variables (`os.getenv(...)` or Pydantic `BaseSettings`).
+- **Secret Masking & Redaction**:
+  - Automatically mask API keys in logs, audit tables, and API responses (e.g., `sk-velo-AqAp...`).
+  - Use entropy and pattern scanning (e.g., `GuardrailManager`) to scrub PII and credentials prior to external model routing.
+- **Constant-Time Verification**:
+  - Always verify authentication tokens and API keys using constant-time comparison (`secrets.compare_digest`) to prevent timing side-channel attacks:
+    ```python
+    import secrets
+
+    def verify_token(provided_token: str, stored_hash: str) -> bool:
+        return secrets.compare_digest(provided_token, stored_hash)
+    ```
+
+## 2. Injection & Input Sanitization
+- **SQL Injection**:
+  - Always execute database queries with parameterized statements.
+  - NEVER format or concatenate user strings into SQL queries:
+    ```python
+    # ❌ Dangerous:
+    cursor.execute(f"SELECT * FROM keys WHERE id = '{user_input}'")
+    # ✅ Secure:
+    cursor.execute("SELECT * FROM keys WHERE id = ?", (user_input,))
+    ```
+- **Command Injection**:
+  - Avoid `subprocess.run(..., shell=True)` and `os.system()`. Always pass arguments as explicit lists without invoking shell interpreters.
+
+## 3. Server-Side Request Forgery (SSRF) Protection
+- When dispatching requests to external provider endpoints:
+  - Validate and sanitize target URLs against an allowed list of protocols (`https://` preferred).
+  - Prohibit routing to private loopback/internal CIDRs (`127.0.0.1`, `localhost`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`) unless explicitly designated in test environments.
+
+## 4. Prompt Injection & AI Guardrails
+- Validate untrusted user prompts through heuristic and weighted injection detection (`InjectionGuard`) before passing to downstream models.
+- Apply strict token limits, timeout budgets, and rate limiting to prevent denial-of-service and cost exhaustion attacks.

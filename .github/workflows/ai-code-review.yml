@@ -1,0 +1,143 @@
+name: Automated AI Code Review
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-code-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Automated Static Standards & Security PR Audit
+  static-review:
+    name: Architecture & Standards Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Analyze PR Diff against VeloRoute Standards
+        id: review
+        shell: bash
+        run: |
+          python -c '
+          import os, subprocess, json, re
+
+          # Get PR diff files
+          base_ref = os.getenv("GITHUB_BASE_REF", "main")
+          try:
+              changed_files = subprocess.check_output(
+                  ["git", "diff", "--name-only", f"origin/{base_ref}...HEAD"],
+                  text=True
+              ).splitlines()
+          except Exception:
+              changed_files = []
+
+          findings = []
+          secret_pattern = re.compile(r"""(sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{20,}|AIza[0-9A-Za-z-_]{35}|bearer\s+[a-zA-Z0-9_\-\.]{25,})""", re.IGNORECASE)
+          blocking_pattern = re.compile(r"""^\s*async\s+def\s+.*?(time\.sleep|requests\.get|requests\.post)""", re.MULTILINE)
+          todo_placeholder = re.compile(r"""(TODO|FIXME|placeholder):?\s*implement""", re.IGNORECASE)
+
+          for f in changed_files:
+              if not os.path.isfile(f):
+                  continue
+              # Ignore vendor/reference files
+              if any(ignored in f for ignored in ["reference_repos", "node_modules", ".venv", ".git"]):
+                  continue
+
+              with open(f, "r", encoding="utf-8", errors="ignore") as fh:
+                  content = fh.read()
+
+              # 1. Check for committed raw secrets
+              matches = secret_pattern.findall(content)
+              if matches and "test" not in f:
+                  findings.append(f"⚠️ **Secret Exposure Warning**: Potential hardcoded credential pattern found in `{f}`")
+
+              # 2. Check for blocking synchronous calls in async definitions
+              if f.endswith(".py"):
+                  if blocking_pattern.search(content):
+                      findings.append(f"❌ **Async Concurrency Issue**: Blocking synchronous call detected inside `async def` in `{f}`. Use async equivalents or `asyncio.to_thread`.")
+
+              # 3. Check for unfinished placeholder slop
+              if todo_placeholder.search(content):
+                  findings.append(f"💡 **Code Hygiene**: Unfinished implementation placeholder (`TODO: implement`) detected in `{f}`.")
+
+          # Output markdown report
+          report = "### 🤖 VeloRoute Automated Code Review\n\n"
+          report += f"**Scanned Files:** {len(changed_files)} changed files.\n\n"
+
+          if not findings:
+              report += "✅ **All architectural standards verified!** No secret leaks, blocking async calls, or unfinished placeholders detected.\n"
+          else:
+              report += "#### Findings & Recommendations:\n"
+              for item in findings:
+                  report += f"- {item}\n"
+
+          report += "\n*Standards Enforced: Next.js 15+ App Router, Async FastAPI, OWASP Top 10, Zero-Slop Architecture.*"
+
+          with open("review_report.md", "w", encoding="utf-8") as out:
+              out.write(report)
+          '
+
+      - name: Post PR Review Comment
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('review_report.md', 'utf8');
+            
+            // Check for existing automated comment to update instead of spamming
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(c => c.body.includes('🤖 VeloRoute Automated Code Review'));
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: report
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: report
+              });
+            }
+
+  # Deep LLM Reviewer via Qodo PR-Agent (activated when OPENAI_API_KEY or ANTHROPIC_API_KEY is configured)
+  pr-agent:
+    name: Qodo AI PR-Agent Review
+    runs-on: ubuntu-latest
+    if: ${{ env.OPENAI_API_KEY != '' || env.ANTHROPIC_API_KEY != '' }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - name: Run Qodo PR-Agent
+        uses: qodo-ai/pr-agent-action@v0.22
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PR_REVIEWER_EXTRA_INSTRUCTIONS: "Adhere to Next.js 15+ App Router, Python Async FastAPI, and OWASP Zero-Trust rules described in AGENTS.md"

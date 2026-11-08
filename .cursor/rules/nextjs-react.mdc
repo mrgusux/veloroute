@@ -1,0 +1,63 @@
+---
+description: Next.js 15+ App Router, React 19, and Tailwind CSS 4 best practices and architecture
+globs: ["website/**", "**/*.tsx", "**/*.jsx", "**/app/**", "**/components/**"]
+alwaysApply: false
+---
+
+# Next.js 15+ App Router & React 19 Architecture Rules
+
+## 1. Server vs Client Component Boundaries
+- **Default to Server Components (RSC)**: All components in `app/` are Server Components unless explicitly marked with `'use client'`.
+- **When to use `'use client'`**:
+  - Interactivity: event listeners (`onClick`, `onChange`, `onSubmit`).
+  - State & lifecycle: `useState`, `useReducer`, `useEffect`, `useRef`.
+  - Browser APIs: `window`, `document`, `localStorage`, `sessionStorage`, `navigator`.
+- **Component Splitting Strategy**:
+  - Keep `'use client'` components at the lowest possible leaf nodes.
+  - Do not make an entire page or layout `'use client'` just to handle a button click or modal toggle.
+  - Pass Server Components as `children` or render props into Client Components when wrapping layout containers.
+
+## 2. Asynchronous Data Fetching & Parallelism
+- **Parallel Fetching**: Avoid sequential async waterfalls. Fetch independent resources concurrently using `Promise.all`:
+  ```typescript
+  // ✅ Correct: Parallel fetch
+  const [projectData, metricsData] = await Promise.all([
+    getProject(id),
+    getMetrics(id)
+  ]);
+  ```
+- **Streaming UI**: Wrap dynamic or slow data-dependent components in `<Suspense fallback={<LoadingSkeleton />}>`.
+- **Caching & Revalidation**:
+  - Use `revalidateTag()` and `revalidatePath()` for precision on-demand cache revalidation.
+  - For dynamic real-time routes, configure route segment options cleanly (`export const dynamic = 'force-dynamic'`).
+
+## 3. Server Actions & Mutations
+- Add `'use server'` at top of action files or inside action functions.
+- **Validation**: Every Server Action must validate inputs via a Zod schema before executing any logic:
+  ```typescript
+  import { z } from 'zod';
+
+  const KeyCreationSchema = z.object({
+    name: z.string().min(1).max(64),
+    budget: z.number().positive(),
+  });
+
+  export async function createVirtualKeyAction(rawInput: unknown) {
+    const result = KeyCreationSchema.safeParse(rawInput);
+    if (!result.success) {
+      return { success: false, errors: result.error.flatten() };
+    }
+    // Perform mutation securely
+  }
+  ```
+- Never expose sensitive tokens, raw database connection strings, or system paths across the Server/Client boundary.
+
+## 4. Tailwind CSS 4 & Zero-Slop Styling
+- **Semantic CSS Classes**: Use semantic token classes (`bg-background`, `text-foreground`, `border-border`, `text-muted-foreground`) to maintain proper dark/light mode balance.
+- **Layout Shift Prevention**:
+  - Use `next/image` with explicit `width`, `height`, and appropriate `sizes` attribute.
+  - Use `next/font` for web font loading with zero Cumulative Layout Shift (CLS < 0.05).
+- **Responsive & Accessible Design**:
+  - Mobile-first breakpoints (`sm:`, `md:`, `lg:`, `xl:`).
+  - Explicit focus states: `focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none`.
+  - Accessible contrast ratios (WCAG AA standard).

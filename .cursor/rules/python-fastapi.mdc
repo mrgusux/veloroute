@@ -1,0 +1,46 @@
+---
+description: Python Clean Architecture, Async FastAPI, and Concurrency Guidelines
+globs: ["veloroute/**", "**/*.py", "tests/**"]
+alwaysApply: false
+---
+
+# Python Clean Architecture & Async FastAPI Rules
+
+## 1. Concurrency & Async Event Loop Discipline
+- **Zero Blocking Calls in `async def`**:
+  - Never invoke synchronous blocking functions (`requests.get`, `time.sleep`, synchronous database drivers, standard file writes on large files) directly inside an `async def`.
+  - Use `await asyncio.sleep(...)`, `httpx.AsyncClient`, `aiofiles`, or offload blocking operations via `await asyncio.to_thread(func, *args)`.
+- If a route handler is purely CPU-bound or relies on a synchronous library without an async equivalent, declare it as a standard `def` (FastAPI automatically runs sync route handlers on an external thread pool).
+
+## 2. Clean Architecture & Layer Separation
+- **Separation of Concerns**:
+  1. `veloroute/ui/routes/` & `veloroute/gateway/`: Transport & HTTP layer. Handles route params, query models, authentication dependencies, and HTTP response serialization.
+  2. `veloroute/core/`: Application & domain logic (Router, KeyManager, StreamResilienceManager, GuardrailManager). Contains zero FastAPI or Starlette dependencies.
+  3. `veloroute/storage/`: Data persistence and database driver abstractions.
+- **Dependency Injection**:
+  - Use FastAPI's `Depends()` for service wiring, database session lifecycle, and authentication validation.
+
+## 3. Pydantic v2 Models & Serialization
+- Always validate incoming payload data using Pydantic v2 models with explicit type annotations and field constraints:
+  ```python
+  from pydantic import BaseModel, Field
+
+  class RouteRequest(BaseModel):
+      model: str = Field(..., min_length=1, description="Target model identifier")
+      messages: list[dict[str, Any]] = Field(..., min_length=1)
+      temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+  ```
+- Always define explicit `response_model` on endpoints or return validated schemas to prevent internal field leaks.
+
+## 4. Resilience & Error Handling
+- Wrap external network requests in timeouts and circuit breakers (leverage `StreamResilienceManager` and `KeyManager`).
+- Use standardized JSON error responses:
+  ```python
+  from fastapi import HTTPException
+
+  raise HTTPException(
+      status_code=404,
+      detail={"code": "KEY_NOT_FOUND", "message": f"Virtual key '{key_id}' does not exist"}
+  )
+  ```
+- Ensure all resources (connections, client sessions) are properly closed via async context managers (`async with`).

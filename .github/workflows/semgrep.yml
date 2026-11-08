@@ -1,0 +1,41 @@
+name: Semgrep Security Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * 0'
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: semgrep-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: Semgrep SAST Scan
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep Security Scan
+        run: |
+          semgrep scan \
+            --config "p/default" \
+            --config "p/owasp-top-ten" \
+            --config "p/python" \
+            --config "p/javascript" \
+            --config "p/typescript" \
+            --error \
+            --exclude "reference_repos" \
+            --exclude "website/node_modules" \
+            --exclude ".venv" \
+            --exclude "veloroute.egg-info"

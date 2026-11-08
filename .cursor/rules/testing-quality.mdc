@@ -1,0 +1,35 @@
+---
+description: Testing and Quality Assurance Standards
+globs: ["tests/**", "**/*test*.py", "**/*.spec.ts", "**/*.test.ts"]
+alwaysApply: false
+---
+
+# Testing & Quality Assurance Standards
+
+## 1. Zero-Flakiness Guarantee
+- All tests must be 100% deterministic, hermetic, and isolated.
+- Never rely on real third-party external networks or live paid API endpoints in automated tests.
+- Always mock external HTTP requests, LLM API responses, and external clock timeouts using deterministic mocks (`unittest.mock.patch`, `httpx.MockTransport`, or `pytest-mock`).
+
+## 2. Comprehensive Edge Case Coverage
+When adding or updating features, tests must cover:
+- **Boundary Conditions**: Empty collections, zero values, negative numbers, maximum string lengths, maximum token limits.
+- **Error Pathways**: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 429 Rate Limit Exceeded, 500 Internal Server Error, 503 Gateway Timeout.
+- **Failover & Resilience**: Provider fallbacks, circuit breaker trip and recovery, mid-stream retry behavior.
+- **Malformed Input**: Invalid JSON payloads, unexpected data types, missing required fields.
+
+## 3. Preservation of Existing Tests
+- **Never weaken or delete tests**: Under no circumstances should an existing test assertion be relaxed, commented out, or removed simply to make a change pass.
+- If an existing test fails, treat it as a hard regression signal and fix the underlying implementation.
+
+## 4. Test Execution Commands
+- **Python Full Test Suite**:
+  ```powershell
+  .\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
+  ```
+- **Website Production Build & Lint**:
+  ```powershell
+  cd website
+  npm run lint
+  npm run build
+  ```
