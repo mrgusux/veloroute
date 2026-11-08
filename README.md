@@ -4,11 +4,12 @@
 
 **Enterprise Universal AI Gateway, High-Availability LLM Routing & Token-Saviour Optimization Engine**
 
+[![Live Website](https://img.shields.io/badge/website-veloroute--tau.vercel.app-7928CA.svg?logo=vercel&logoColor=white)](https://veloroute-tau.vercel.app)
 [![CI](https://github.com/mrgusux/veloroute/actions/workflows/ci.yml/badge.svg)](https://github.com/mrgusux/veloroute/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/downloads/)
 [![Docker Ready](https://img.shields.io/badge/docker-multi--stage%20slim-2496ED.svg?logo=docker&logoColor=white)](https://github.com/mrgusux/veloroute)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmrgusux%2Fveloroute&root-directory=website)
-[![Next.js 15](https://img.shields.io/badge/Next.js-15%20App%20Router-black.svg?logo=nextdotjs&logoColor=white)](https://github.com/mrgusux/veloroute/tree/main/website)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15%20App%20Router-black.svg?logo=nextdotjs&logoColor=white)](https://veloroute-tau.vercel.app)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests Passing](https://img.shields.io/badge/tests-219%20passed-brightgreen.svg)](https://github.com/mrgusux/veloroute)
@@ -18,7 +19,7 @@
 
 *A blazingly fast, multi-provider AI gateway engineered for production reliability, radical token cost reduction, instant mid-stream failover, and zero vendor lock-in.*
 
-[Landing Page](website/) • [Key Features](#key-features) • [Architecture](#architecture) • [Docker & K8s Quickstart](#docker--kubernetes-quickstart) • [Local Quickstart](#local-python-quickstart) • [SDK Integration](#sdk-integration) • [Routing Strategies](#routing-strategies) • [CLI & Dashboard](#cli--dashboard)
+[🌐 Live Website](https://veloroute-tau.vercel.app) • [Key Features](#key-features) • [Architecture](#architecture) • [Docker & K8s Quickstart](#docker--kubernetes-quickstart) • [Local Quickstart](#local-python-quickstart) • [SDK Integration](#sdk-integration) • [Routing Strategies](#routing-strategies) • [CLI & Dashboard](#cli--dashboard)
 
 
 </div>
