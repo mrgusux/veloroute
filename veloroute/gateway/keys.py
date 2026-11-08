@@ -256,20 +256,29 @@ class VirtualKeyManager:
     # ── CRUD ────────────────────────────────────────────────────────────
     def _dispatch_budget_alert_webhook(self, url: str, payload: Dict[str, Any]) -> None:
         """Asynchronously dispatches an HTTP POST webhook alert on budget events without blocking requests."""
+        if not url:
+            return
+        try:
+            from veloroute.utils import validate_url_ssrf
+            valid_url = validate_url_ssrf(url)
+        except Exception as err:
+            logger.warning(f"[VirtualKey] Budget alert webhook cancelled (SSRF check failed): {err}")
+            return
+
         def _post():
             try:
                 import urllib.request
                 import json
                 req = urllib.request.Request(
-                    url,
+                    valid_url,
                     data=json.dumps(payload).encode("utf-8"),
                     headers={"Content-Type": "application/json", "User-Agent": "VeloRoute-Gateway/2.0"},
                     method="POST",
                 )
                 with urllib.request.urlopen(req, timeout=5.0) as resp:
-                    logger.info(f"[VirtualKey] Budget webhook delivered to {url} (status={resp.status})")
+                    logger.info(f"[VirtualKey] Budget webhook delivered to {valid_url} (status={resp.status})")
             except Exception as err:
-                logger.warning(f"[VirtualKey] Failed to dispatch budget alert webhook to {url}: {err}")
+                logger.warning(f"[VirtualKey] Failed to dispatch budget alert webhook to {valid_url}: {err}")
 
         threading.Thread(target=_post, daemon=True).start()
 
@@ -299,6 +308,14 @@ class VirtualKeyManager:
             raise ValueError("rpm_limit must be > 0")
         if tpm_limit is not None and int(tpm_limit) <= 0:
             raise ValueError("tpm_limit must be > 0")
+        if budget_alert_webhook:
+            from urllib.parse import urlparse
+            p = urlparse(str(budget_alert_webhook).strip())
+            if p.scheme.lower() not in ("http", "https"):
+                raise ValueError("budget_alert_webhook must use http:// or https:// scheme")
+            if (p.hostname or "").lower() in ("169.254.169.254", "metadata.google.internal", "100.100.100.200"):
+                raise ValueError("budget_alert_webhook cannot target cloud metadata services")
+            budget_alert_webhook = str(budget_alert_webhook).strip()
 
         if expires_at is None and expires_in is not None:
             expires_at = _now() + float(expires_in)
@@ -370,7 +387,16 @@ class VirtualKeyManager:
                     record.budget_alert_threshold = float(value) if value is not None else None
                     record.alert_sent = False
                 elif field_name == "budget_alert_webhook":
-                    record.budget_alert_webhook = str(value).strip() if value else None
+                    if value:
+                        from urllib.parse import urlparse
+                        p = urlparse(str(value).strip())
+                        if p.scheme.lower() not in ("http", "https"):
+                            raise ValueError("budget_alert_webhook must use http:// or https:// scheme")
+                        if (p.hostname or "").lower() in ("169.254.169.254", "metadata.google.internal", "100.100.100.200"):
+                            raise ValueError("budget_alert_webhook cannot target cloud metadata services")
+                        record.budget_alert_webhook = str(value).strip()
+                    else:
+                        record.budget_alert_webhook = None
                 elif field_name == "auto_pause_on_budget":
                     if value is not None:
                         record.auto_pause_on_budget = bool(value)

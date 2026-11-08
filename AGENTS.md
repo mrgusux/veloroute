@@ -29,7 +29,7 @@ All coding agents operating on this repository must strictly adhere to the proje
 | **Next.js & React** | `nextjs-react.mdc` | `nextjs-react.md` | Server Components by default; leaf `'use client'`; parallel `Promise.all` fetching; Zod-validated Server Actions; zero CLS. |
 | **Python & FastAPI** | `python-fastapi.mdc` | `python-fastapi.md` | Zero blocking calls in `async def`; Pydantic v2 schemas; clean layer separation; standard error envelopes. |
 | **Security & OWASP** | `security-owasp.mdc` | `security.md` | Zero hardcoded credentials; constant-time token comparison; parameterized SQL; SSRF protection; prompt injection defense. |
-| **Testing & Quality** | `testing-quality.mdc` | `testing.md` | 100% deterministic tests; zero mock flakiness; all 219+ unit tests must pass; never weaken or skip assertions. |
+| **Testing & Quality** | `testing-quality.mdc` | `testing.md` | 100% deterministic tests; zero mock flakiness; all 225+ unit tests must pass; never weaken or skip assertions. |
 
 ## 3. Development & Verification Commands
 - **Run full unit test suite**:

@@ -1,4 +1,5 @@
 import os
+import asyncio
 import logging
 from typing import Optional
 from pathlib import Path
@@ -10,6 +11,15 @@ from veloroute.cli import _set_env_key, _remove_env_key, _safe_load_env
 logger = logging.getLogger("veloroute.ui.providers")
 
 router = APIRouter()
+
+async def _async_set_env_key(path: Path, key: str, value: str) -> None:
+    await asyncio.to_thread(_set_env_key, path, key, value)
+
+async def _async_remove_env_key(path: Path, key: str) -> None:
+    await asyncio.to_thread(_remove_env_key, path, key)
+
+async def _async_safe_load_env(override: bool = True) -> None:
+    await asyncio.to_thread(_safe_load_env, override=override)
 
 @router.get("/api/v1/providers")
 async def list_providers(_: str = Depends(auth)):
@@ -35,7 +45,7 @@ async def add_provider(req: AddProviderRequest, _: str = Depends(auth)):
         env_path = Path(".env")
         p_name = req.name.upper()
         if req.base_url:
-            _set_env_key(env_path, f"{p_name}_BASE_URL", req.base_url)
+            await _async_set_env_key(env_path, f"{p_name}_BASE_URL", req.base_url)
             os.environ[f"{p_name}_BASE_URL"] = req.base_url
             
         existing_keys_raw = os.environ.get(f"{p_name}_API_KEYS", "")
@@ -44,13 +54,13 @@ async def add_provider(req: AddProviderRequest, _: str = Depends(auth)):
             if k not in existing_keys:
                 existing_keys.append(k)
         keys_str = ",".join(existing_keys)
-        _set_env_key(env_path, f"{p_name}_API_KEYS", keys_str)
+        await _async_set_env_key(env_path, f"{p_name}_API_KEYS", keys_str)
         os.environ[f"{p_name}_API_KEYS"] = keys_str
 
         if req.models:
             models_clean = [m.strip() for m in req.models if m.strip()]
             if models_clean:
-                _set_env_key(env_path, f"{p_name}_MODELS", ",".join(models_clean))
+                await _async_set_env_key(env_path, f"{p_name}_MODELS", ",".join(models_clean))
                 os.environ[f"{p_name}_MODELS"] = ",".join(models_clean)
     except Exception as e:
         logger.warning(f"Could not auto-persist provider to .env: {e}")
@@ -82,22 +92,22 @@ async def update_provider(name: str, req: UpdateProviderRequest, _: str = Depend
     # 3. Persist API Keys if provided
     if valid_keys is not None and len(valid_keys) > 0:
         keys_str = ",".join(valid_keys)
-        _set_env_key(env_path, f"{p_upper}_API_KEYS", keys_str)
+        await _async_set_env_key(env_path, f"{p_upper}_API_KEYS", keys_str)
         os.environ[f"{p_upper}_API_KEYS"] = keys_str
-        _remove_env_key(env_path, f"{p_upper}_API_KEY")
+        await _async_remove_env_key(env_path, f"{p_upper}_API_KEY")
         os.environ.pop(f"{p_upper}_API_KEY", None)
 
     # 4. Persist Custom Models if provided
     if req.models is not None:
         valid_models = [m.strip() for m in req.models if m.strip()]
         if valid_models:
-            _set_env_key(env_path, f"{p_upper}_MODELS", ",".join(valid_models))
+            await _async_set_env_key(env_path, f"{p_upper}_MODELS", ",".join(valid_models))
             os.environ[f"{p_upper}_MODELS"] = ",".join(valid_models)
         else:
-            _remove_env_key(env_path, f"{p_upper}_MODELS")
+            await _async_remove_env_key(env_path, f"{p_upper}_MODELS")
             os.environ.pop(f"{p_upper}_MODELS", None)
 
-    _safe_load_env(override=True)
+    await _async_safe_load_env(override=True)
     return {"status": "ok", "provider": p_lower, "message": f"Provider {name} updated"}
 
 @router.delete("/api/v1/providers/{name}")
@@ -117,14 +127,14 @@ async def delete_provider(name: str, _: str = Depends(auth)):
     # 3. Remove from .env file
     try:
         env_path = Path(".env")
-        _remove_env_key(env_path, f"{p_upper}_API_KEYS")
-        _remove_env_key(env_path, f"{p_upper}_API_KEY")
-        _remove_env_key(env_path, f"{p_upper}_BASE_URL")
-        _remove_env_key(env_path, f"{p_upper}_MODELS")
+        await _async_remove_env_key(env_path, f"{p_upper}_API_KEYS")
+        await _async_remove_env_key(env_path, f"{p_upper}_API_KEY")
+        await _async_remove_env_key(env_path, f"{p_upper}_BASE_URL")
+        await _async_remove_env_key(env_path, f"{p_upper}_MODELS")
     except Exception as e:
         logger.warning(f"Could not remove from .env: {e}")
         
-    _safe_load_env(override=True)
+    await _async_safe_load_env(override=True)
     return {"status": "ok", "provider": p_lower, "message": f"Provider {name} deleted"}
 
 @router.delete("/api/v1/providers/{name}/keys")
@@ -139,17 +149,17 @@ async def delete_key(name: str, key: str = Query(...), _: str = Depends(auth)):
         remaining_keys = [r.key for r in existing_records]
         if remaining_keys:
             keys_str = ",".join(remaining_keys)
-            _set_env_key(env_path, f"{p_upper}_API_KEYS", keys_str)
+            await _async_set_env_key(env_path, f"{p_upper}_API_KEYS", keys_str)
             os.environ[f"{p_upper}_API_KEYS"] = keys_str
-            _remove_env_key(env_path, f"{p_upper}_API_KEY")
+            await _async_remove_env_key(env_path, f"{p_upper}_API_KEY")
             os.environ.pop(f"{p_upper}_API_KEY", None)
         else:
-            _remove_env_key(env_path, f"{p_upper}_API_KEYS")
-            _remove_env_key(env_path, f"{p_upper}_API_KEY")
+            await _async_remove_env_key(env_path, f"{p_upper}_API_KEYS")
+            await _async_remove_env_key(env_path, f"{p_upper}_API_KEY")
             os.environ.pop(f"{p_upper}_API_KEYS", None)
             os.environ.pop(f"{p_upper}_API_KEY", None)
             
-    _safe_load_env(override=True)
+    await _async_safe_load_env(override=True)
     return {"status": "ok", "provider": p_lower, "removed": removed}
 
 @router.get("/api/v1/providers/{name}/models")
@@ -189,12 +199,12 @@ async def set_provider_custom_models(name: str, req: dict, _: str = Depends(auth
     llm_client.set_custom_models(p_lower, models if models else None)
     env_path = Path(".env")
     if models:
-        _set_env_key(env_path, f"{p_upper}_MODELS", ",".join(models))
+        await _async_set_env_key(env_path, f"{p_upper}_MODELS", ",".join(models))
         os.environ[f"{p_upper}_MODELS"] = ",".join(models)
     else:
-        _remove_env_key(env_path, f"{p_upper}_MODELS")
+        await _async_remove_env_key(env_path, f"{p_upper}_MODELS")
         os.environ.pop(f"{p_upper}_MODELS", None)
-    _safe_load_env(override=True)
+    await _async_safe_load_env(override=True)
     return {"status": "ok", "provider": p_lower, "custom_models": models}
 
 @router.delete("/api/v1/providers/{name}/custom_models")
@@ -203,14 +213,20 @@ async def delete_provider_custom_models(name: str, _: str = Depends(auth)):
     p_upper = name.upper()
     llm_client.remove_custom_models(p_lower)
     env_path = Path(".env")
-    _remove_env_key(env_path, f"{p_upper}_MODELS")
+    await _async_remove_env_key(env_path, f"{p_upper}_MODELS")
     os.environ.pop(f"{p_upper}_MODELS", None)
-    _safe_load_env(override=True)
+    await _async_safe_load_env(override=True)
     return {"status": "ok", "provider": p_lower, "message": "Custom models cleared, dynamic discovery restored"}
 
 @router.post("/api/v1/providers/sync_models")
 async def sync_models_endpoint(req: SyncModelsRequest, _: str = Depends(auth)):
     prov_name = req.provider or ""
+    if req.base_url:
+        from veloroute.utils import validate_url_ssrf
+        try:
+            validate_url_ssrf(req.base_url)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid base_url: {e}")
     try:
         discovered = await llm_client.discover_models(
             provider=prov_name,
@@ -236,12 +252,12 @@ async def sync_models_endpoint(req: SyncModelsRequest, _: str = Depends(auth)):
             env_path = Path(".env")
             p_upper = prov_name.upper()
             if filtered:
-                _set_env_key(env_path, f"{p_upper}_MODELS", ",".join(filtered))
+                await _async_set_env_key(env_path, f"{p_upper}_MODELS", ",".join(filtered))
                 os.environ[f"{p_upper}_MODELS"] = ",".join(filtered)
             else:
-                _remove_env_key(env_path, f"{p_upper}_MODELS")
+                await _async_remove_env_key(env_path, f"{p_upper}_MODELS")
                 os.environ.pop(f"{p_upper}_MODELS", None)
-            _safe_load_env(override=True)
+            await _async_safe_load_env(override=True)
         except Exception as e:
             logger.warning(f"Could not persist custom models to .env: {e}")
             
@@ -337,7 +353,7 @@ async def add_keys(name: str, req: AddKeyRequest, _: str = Depends(auth)):
             if k not in existing_keys:
                 existing_keys.append(k)
         keys_str = ",".join(existing_keys)
-        _set_env_key(env_path, f"{p_name}_API_KEYS", keys_str)
+        await _async_set_env_key(env_path, f"{p_name}_API_KEYS", keys_str)
         os.environ[f"{p_name}_API_KEYS"] = keys_str
     except Exception as e:
         logger.warning(f"Could not auto-persist keys to .env: {e}")

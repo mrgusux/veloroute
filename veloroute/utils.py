@@ -561,3 +561,77 @@ def merge_request_headers(
                 continue
             merged[k] = v
     return merged
+
+
+def validate_url_ssrf(url: Optional[str], allow_private: Optional[bool] = None) -> str:
+    """
+    Validate that a URL uses http:// or https:// scheme and does not resolve to restricted
+    SSRF targets (cloud metadata, loopback, link-local, private RFC 1918),
+    unless VELOROUTE_ALLOW_PRIVATE_NETWORKS is explicitly enabled ('true', '1', 'yes').
+    """
+    if not url or not str(url).strip():
+        return ""
+    clean = str(url).strip()
+    from urllib.parse import urlparse
+    import socket
+    import ipaddress
+    import os
+
+    parsed = urlparse(clean)
+    if parsed.scheme.lower() not in ("http", "https"):
+        raise ValueError(f"Invalid URL scheme '{parsed.scheme}'. URL must use http:// or https:// scheme.")
+
+    host = (parsed.hostname or "").strip().lower()
+    if not host:
+        raise ValueError("URL is missing a valid hostname.")
+
+    # Explicit cloud metadata hostnames / well-known metadata targets
+    if host in ("169.254.169.254", "metadata.google.internal", "metadata", "100.100.100.200"):
+        raise ValueError(f"Webhook URL points to a restricted cloud metadata address: {host}")
+
+    if allow_private is None:
+        allow_private = os.environ.get("VELOROUTE_ALLOW_PRIVATE_NETWORKS", "false").lower() in ("true", "1", "yes")
+
+    if not allow_private:
+        # Check loopback hostnames
+        if host in ("localhost", "local", "ip6-localhost", "ip6-loopback") or host.endswith(".local") or host.endswith(".internal"):
+            raise ValueError(f"URL resolves to restricted or private loopback hostname: {host}")
+
+        # Check IP literal or resolve via DNS
+        resolved_ips: List[Union[ipaddress.IPv4Address, ipaddress.IPv6Address]] = []
+        try:
+            resolved_ips.append(ipaddress.ip_address(host))
+        except ValueError:
+            # Check for alternative IPv4 representations (e.g. shorthand 127.1, hex, octal)
+            try:
+                resolved_ips.append(ipaddress.IPv4Address(socket.inet_aton(host)))
+            except (OSError, ValueError):
+                pass
+            if not resolved_ips:
+                # Domain name: attempt resolution
+                try:
+                    port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+                    addr_info = socket.getaddrinfo(host, port, proto=socket.IPPROTO_TCP)
+                    for info in addr_info:
+                        try:
+                            resolved_ips.append(ipaddress.ip_address(info[4][0]))
+                        except ValueError:
+                            pass
+                except (socket.gaierror, socket.herror, OSError):
+                    resolved_ips = []
+
+        for ip in resolved_ips:
+            check_ip = getattr(ip, "ipv4_mapped", None) or ip
+            if (
+                check_ip.is_loopback
+                or check_ip.is_private
+                or check_ip.is_link_local
+                or check_ip.is_multicast
+                or check_ip.is_reserved
+                or check_ip.is_unspecified
+                or str(check_ip).startswith("169.254.")
+            ):
+                raise ValueError(f"URL resolves to restricted or private network address: {ip}")
+
+    return clean
+

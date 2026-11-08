@@ -8,6 +8,7 @@ Supports:
 """
 from __future__ import annotations
 
+import asyncio
 import fnmatch
 import json
 import logging
@@ -94,7 +95,21 @@ class TransformManager:
         try:
             p = Path(self.persistence_path)
             data = [r.to_dict() for r in self._rules.values()]
-            p.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            content = json.dumps(data, indent=2)
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(asyncio.to_thread(p.write_text, content, encoding="utf-8"))
+            except RuntimeError:
+                p.write_text(content, encoding="utf-8")
+        except Exception as e:
+            logger.debug(f"Failed to save transforms to {self.persistence_path}: {e}")
+
+    async def save_async(self):
+        try:
+            p = Path(self.persistence_path)
+            data = [r.to_dict() for r in self._rules.values()]
+            content = json.dumps(data, indent=2)
+            await asyncio.to_thread(p.write_text, content, encoding="utf-8")
         except Exception as e:
             logger.debug(f"Failed to save transforms to {self.persistence_path}: {e}")
 

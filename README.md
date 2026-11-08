@@ -12,7 +12,7 @@
 [![Next.js 16](https://img.shields.io/badge/Next.js-16%20Turbopack-black.svg?logo=nextdotjs&logoColor=white)](https://veloroute-tau.vercel.app)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests Passing](https://img.shields.io/badge/tests-219%20passed-brightgreen.svg)](https://github.com/mrgusux/veloroute)
+[![Tests Passing](https://img.shields.io/badge/tests-225%20passed-brightgreen.svg)](https://github.com/mrgusux/veloroute)
 [![Code Coverage](https://img.shields.io/badge/coverage-99%25-success.svg)](https://github.com/mrgusux/veloroute)
 [![Architecture: Zero Heavy ML](https://img.shields.io/badge/architecture-Zero--Heavy--ML-orange.svg)](https://github.com/mrgusux/veloroute)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/mrgusux/veloroute/pulls)

@@ -63,8 +63,9 @@ async def create_transform(req: RuleCreateRequest, _: str = Depends(auth)):
         enabled=req.enabled,
         description=req.description.strip() if req.description else "",
     )
-    saved = llm_client.transforms.add_rule(rule)
-    return {"status": "created", "rule": saved.to_dict()}
+    llm_client.transforms._rules[rule.id] = rule
+    await llm_client.transforms.save_async()
+    return {"status": "created", "rule": rule.to_dict()}
 
 
 @router.put("/api/v1/transforms/{rule_id}")
@@ -89,7 +90,7 @@ async def update_transform(rule_id: str, req: RuleUpdateRequest, _: str = Depend
     if req.description is not None:
         rule.description = req.description.strip()
 
-    llm_client.transforms._save()
+    await llm_client.transforms.save_async()
     return {"status": "updated", "rule": rule.to_dict()}
 
 
@@ -98,10 +99,17 @@ async def delete_transform(rule_id: str, _: str = Depends(auth)):
     if not hasattr(llm_client, "transforms"):
         raise HTTPException(500, "Transform engine not initialized")
 
-    success = llm_client.transforms.remove_rule(rule_id)
-    if not success:
-        raise HTTPException(404, f"Transform rule {rule_id} not found")
-    return {"status": "deleted", "rule_id": rule_id}
+    if rule_id in llm_client.transforms._rules:
+        del llm_client.transforms._rules[rule_id]
+        await llm_client.transforms.save_async()
+        return {"status": "deleted", "rule_id": rule_id}
+    for k, r in list(llm_client.transforms._rules.items()):
+        if r.name == rule_id:
+            del llm_client.transforms._rules[k]
+            await llm_client.transforms.save_async()
+            return {"status": "deleted", "rule_id": rule_id}
+
+    raise HTTPException(404, f"Transform rule {rule_id} not found")
 
 
 @router.post("/api/v1/transforms/test")

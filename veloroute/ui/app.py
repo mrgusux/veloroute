@@ -4,6 +4,7 @@ VeloRoute Dashboard API
 Fully dynamic REST API with token auth.
 All state is managed in memory on the running VeloRoute client instance.
 """
+from contextlib import asynccontextmanager
 from pathlib import Path
 import os
 from fastapi import FastAPI, Request
@@ -14,8 +15,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from .routes import router as api_router
 from veloroute.gateway.keys import GatewayAuthError
 
+# ─── Lifespan setup ──────────────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from .routes.deps import llm_client
+    if llm_client.storage:
+        await llm_client.storage.connect()
+        await llm_client.router.groups.load()
+        await llm_client.router.load()
+        await llm_client.virtual_keys.load()
+    yield
+    if llm_client.storage and hasattr(llm_client.storage, "disconnect"):
+        try:
+            await llm_client.storage.disconnect()
+        except Exception:
+            pass
+
 # ─── App setup ───────────────────────────────────────────────────────────────
-app = FastAPI(title="VeloRoute Dashboard API", version="2.0")
+app = FastAPI(title="VeloRoute Dashboard API", version="2.0", lifespan=lifespan)
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,15 +77,6 @@ async def gateway_auth_error_handler(request: Request, exc: GatewayAuthError):
         content=exc.to_dict(),
         headers=exc.headers,
     )
-
-@app.on_event("startup")
-async def startup_event():
-    from .routes.deps import llm_client
-    if llm_client.storage:
-        await llm_client.storage.connect()
-        await llm_client.router.groups.load()
-        await llm_client.router.load()
-        await llm_client.virtual_keys.load()
 
 # ─── Serve SPA ───────────────────────────────────────────────────────────────
 @app.get("/favicon.ico", include_in_schema=False)

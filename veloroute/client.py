@@ -31,6 +31,7 @@ import logging
 import os
 import secrets
 import time as _time
+import unicodedata
 from typing import (
     Any, AsyncGenerator, Callable, Dict, List, Optional, Type, TypeVar, Union
 )
@@ -949,6 +950,25 @@ class VeloRoute:
                             break
         return prompt, messages, strategy
 
+    def _scan_for_injection(self, prompt: Optional[str] = None, messages: Optional[List[dict]] = None) -> None:
+        if not self.injection_guard:
+            return
+        texts: List[str] = []
+        if prompt:
+            texts.append(unicodedata.normalize("NFKD", str(prompt)))
+        for m in (messages or []):
+            role = m.get("role", "")
+            if role in ("user", "system", "tool", "developer", "assistant"):
+                raw_c = m.get("content", "")
+                txt = self._get_content_text(raw_c)
+                if txt:
+                    texts.append(unicodedata.normalize("NFKD", str(txt)))
+        combined_text = "\n".join(texts)
+        if combined_text:
+            result = self.injection_guard.scan(combined_text)
+            if result.blocked:
+                raise InjectionBlockedError(result)
+
     # ─── Inference: complete ──────────────────────────────────────────────────
 
     async def complete(
@@ -1043,14 +1063,7 @@ class VeloRoute:
                     messages.append({"role": "user", "content": self.attachment_manager.format_message_content("", attachments)})
 
         if self.injection_guard:
-            prompt_text_for_guard = prompt or "".join(
-                self._get_content_text(m.get("content", ""))
-                for m in (messages or [])
-                if m.get("role") == "user"
-            )
-            result = self.injection_guard.scan(prompt_text_for_guard)
-            if result.blocked:
-                raise InjectionBlockedError(result)
+            self._scan_for_injection(prompt=prompt, messages=messages)
 
         # Rate Limit check
         if self.rate_limit_manager:
@@ -1059,18 +1072,19 @@ class VeloRoute:
             await self.rate_limit_manager.get_limiter(model or group).acquire(est_tokens)
 
         # Guardrails: Mask prompt/messages in-flight
+        guardrail_session: Dict[str, str] = {}
         if self.guardrail:
             if messages:
                 new_messages = []
                 for m in messages:
                     c = m.get("content")
                     if isinstance(c, str):
-                        new_messages.append({**m, "content": self.guardrail.mask_prompt(c)})
+                        new_messages.append({**m, "content": self.guardrail.mask_prompt(c, session_dict=guardrail_session)})
                     elif isinstance(c, list):
                         new_parts = []
                         for part in c:
                             if isinstance(part, dict) and part.get("type") == "text":
-                                new_parts.append({**part, "text": self.guardrail.mask_prompt(part.get("text", ""))})
+                                new_parts.append({**part, "text": self.guardrail.mask_prompt(part.get("text", ""), session_dict=guardrail_session)})
                             else:
                                 new_parts.append(part)
                         new_messages.append({**m, "content": new_parts})
@@ -1078,7 +1092,7 @@ class VeloRoute:
                         new_messages.append(m)
                 messages = new_messages
             if prompt:
-                prompt = self.guardrail.mask_prompt(prompt)
+                prompt = self.guardrail.mask_prompt(prompt, session_dict=guardrail_session)
 
         # Context trim
         if self.auto_trim_context:
@@ -1180,7 +1194,7 @@ class VeloRoute:
 
             # Unmask response if guardrails are active
             if response and response.content and self.guardrail:
-                response.content = self.guardrail.unmask_response(response.content)
+                response.content = self.guardrail.unmask_response(response.content, session_dict=guardrail_session)
 
             # Apply response redaction transforms
             if response and response.content and hasattr(self, "transforms"):
@@ -1414,6 +1428,9 @@ class VeloRoute:
                 else:
                     messages.append({"role": "user", "content": self.attachment_manager.format_message_content("", attachments)})
 
+        if self.injection_guard:
+            self._scan_for_injection(prompt=prompt, messages=messages)
+
         # Rate Limit check
         if self.rate_limit_manager:
             prompt_text = prompt or "".join(self._get_content_text(m.get("content", "")) for m in messages)
@@ -1421,18 +1438,19 @@ class VeloRoute:
             await self.rate_limit_manager.get_limiter(model or group).acquire(est_tokens)
 
         # Guardrails: Mask prompt/messages in-flight
+        guardrail_session: Dict[str, str] = {}
         if self.guardrail:
             if messages:
                 new_messages = []
                 for m in messages:
                     c = m.get("content")
                     if isinstance(c, str):
-                        new_messages.append({**m, "content": self.guardrail.mask_prompt(c)})
+                        new_messages.append({**m, "content": self.guardrail.mask_prompt(c, session_dict=guardrail_session)})
                     elif isinstance(c, list):
                         new_parts = []
                         for part in c:
                             if isinstance(part, dict) and part.get("type") == "text":
-                                new_parts.append({**part, "text": self.guardrail.mask_prompt(part.get("text", ""))})
+                                new_parts.append({**part, "text": self.guardrail.mask_prompt(part.get("text", ""), session_dict=guardrail_session)})
                             else:
                                 new_parts.append(part)
                         new_messages.append({**m, "content": new_parts})
@@ -1440,7 +1458,7 @@ class VeloRoute:
                         new_messages.append(m)
                 messages = new_messages
             if prompt:
-                prompt = self.guardrail.mask_prompt(prompt)
+                prompt = self.guardrail.mask_prompt(prompt, session_dict=guardrail_session)
 
         if self.auto_trim_context:
             messages = self._trim_messages(messages, model or group or "")
@@ -1519,7 +1537,7 @@ class VeloRoute:
                     if not text:
                         continue
                     if self.guardrail:
-                        text = self.guardrail.unmask_response(text)
+                        text = self.guardrail.unmask_response(text, session_dict=guardrail_session)
                     if first_chunk_at is None:
                         first_chunk_at = _time.monotonic()
                     chunks.append(text)
@@ -1530,7 +1548,7 @@ class VeloRoute:
                     if not text:
                         continue
                     if self.guardrail:
-                        text = self.guardrail.unmask_response(text)
+                        text = self.guardrail.unmask_response(text, session_dict=guardrail_session)
                     if first_chunk_at is None:
                         first_chunk_at = _time.monotonic()
                     reasoning_chunks.append(text)
@@ -1592,7 +1610,7 @@ class VeloRoute:
 
             response_text = "".join(chunks)
             if self.guardrail:
-                response_text = self.guardrail.unmask_response(response_text)
+                response_text = self.guardrail.unmask_response(response_text, session_dict=guardrail_session)
 
             prompt_text = prompt or "".join(self._get_content_text(m.get("content", "")) for m in (messages or []))
             prompt_tokens = int(usage.get("prompt_tokens") or self._estimate_tokens(prompt_text))

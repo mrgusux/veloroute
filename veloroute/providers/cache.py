@@ -88,6 +88,7 @@ class ModelInfoCache:
         self._max         = max_size
         self._lru:        OrderedDict[str, dict] = OrderedDict()
         self._lock        = threading.Lock()
+        self._io_lock     = threading.Lock()
         self._disk_loaded = False
 
         # Resolve cache directory — constructor arg > env var > default
@@ -130,15 +131,21 @@ class ModelInfoCache:
             logger.warning(f"ModelInfoCache: failed to load disk cache: {e}")
 
     def _flush_disk(self) -> None:
-        """Write current LRU to disk (best-effort, non-fatal on failure)."""
+        """Write current LRU to disk (best-effort, non-fatal on failure, non-blocking)."""
         try:
-            self._disk_dir.mkdir(parents=True, exist_ok=True)
-            self._disk_file.write_text(
-                json.dumps(dict(self._lru), indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
+            snapshot = json.dumps(dict(self._lru), indent=2, ensure_ascii=False)
+            target = self._disk_file
+            parent = self._disk_dir
+            def _write():
+                with self._io_lock:
+                    try:
+                        parent.mkdir(parents=True, exist_ok=True)
+                        target.write_text(snapshot, encoding="utf-8")
+                    except Exception as ex:
+                        logger.warning(f"ModelInfoCache: disk write failed: {ex}")
+            threading.Thread(target=_write, daemon=True).start()
         except Exception as e:
-            logger.warning(f"ModelInfoCache: disk write failed: {e}")
+            logger.warning(f"ModelInfoCache: disk flush spawn failed: {e}")
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -177,17 +184,7 @@ class ModelInfoCache:
         """Remove a single entry so it will be re-fetched from the provider API."""
         with self._lock:
             self._lru.pop(key, None)
-            if self._disk_file.exists():
-                try:
-                    data = json.loads(self._disk_file.read_text(encoding="utf-8"))
-                    if key in data:
-                        del data[key]
-                        self._disk_file.write_text(
-                            json.dumps(data, indent=2, ensure_ascii=False),
-                            encoding="utf-8",
-                        )
-                except Exception:
-                    pass
+            self._flush_disk()
 
     def clear(self) -> None:
         """Wipe the in-memory LRU and delete the disk cache file."""

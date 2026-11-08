@@ -59,20 +59,11 @@ class WebhookDispatcher:
 
     @staticmethod
     def validate_webhook_url(url: Optional[str]) -> str:
-        """Validate webhook URL scheme and block cloud metadata SSRF targets."""
+        """Validate webhook URL scheme and block cloud metadata and SSRF targets."""
         if not url or not str(url).strip():
             return ""
-        clean = str(url).strip()
-        from urllib.parse import urlparse
-        parsed = urlparse(clean)
-        if parsed.scheme not in ("http", "https"):
-            raise ValueError("Webhook URL must use http:// or https:// scheme.")
-        host = (parsed.hostname or "").lower()
-        if not host:
-            raise ValueError("Webhook URL is missing a valid hostname.")
-        if host in ("169.254.169.254", "metadata.google.internal", "100.100.100.200"):
-            raise ValueError("Webhook URL points to a restricted cloud metadata address.")
-        return clean
+        from veloroute.utils import validate_url_ssrf
+        return validate_url_ssrf(url)
 
     def configure(self, url: Optional[str] = None, secret: Optional[str] = None) -> Dict[str, Any]:
         """Update webhook URL and HMAC secret at runtime."""
@@ -95,8 +86,13 @@ class WebhookDispatcher:
 
     async def dispatch(self, event: str, data: Dict[str, Any], target_url: Optional[str] = None) -> None:
         """Trigger an event; schedules fire-and-forget delivery task."""
-        effective_url = (target_url or "").strip() or (self.url or "").strip()
-        if not effective_url:
+        raw_url = (target_url or "").strip() or (self.url or "").strip()
+        if not raw_url:
+            return
+        try:
+            effective_url = self.validate_webhook_url(raw_url)
+        except Exception as e:
+            logger.warning(f"Webhook dispatch cancelled: invalid or unsafe URL '{raw_url}': {e}")
             return
         evt = WebhookEvent(event=event, data=data)
         asyncio.create_task(self._deliver(evt, target_url=effective_url))

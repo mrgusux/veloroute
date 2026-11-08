@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  LucideIcon,
   Layers,
   Cpu,
   ShieldAlert,
@@ -20,7 +21,7 @@ interface StrategyItem {
   name: string;
   badge: string;
   badgeColor: string;
-  icon: any;
+  icon: LucideIcon;
   headline: string;
   description: string;
   bulletPoints: string[];
