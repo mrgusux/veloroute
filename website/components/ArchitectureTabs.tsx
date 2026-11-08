@@ -134,6 +134,7 @@ const STRATEGIES: StrategyItem[] = [
 
 export default function ArchitectureTabs() {
   const [activeTab, setActiveTab] = useState<string>("kv_affinity");
+  const [sentinelState, setSentinelState] = useState<"CLOSED" | "OPEN" | "HALF_OPEN">("CLOSED");
 
   const current = STRATEGIES.find((s) => s.id === activeTab) || STRATEGIES[0];
 
@@ -255,21 +256,90 @@ export default function ArchitectureTabs() {
                 {current.visualType === "sentinel" && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
-                      <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-400">
-                        <div className="font-bold">CLOSED</div>
+                      <button
+                        onClick={() => setSentinelState("CLOSED")}
+                        className={`p-2.5 rounded-lg border transition ${
+                          sentinelState === "CLOSED"
+                            ? "bg-emerald-950/80 border-emerald-400 text-emerald-300 ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-500/20"
+                            : "bg-slate-900/60 border-white/5 text-slate-400 hover:border-emerald-500/30"
+                        }`}
+                      >
+                        <div className="font-bold flex items-center justify-center space-x-1">
+                          {sentinelState === "CLOSED" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                          <span>CLOSED</span>
+                        </div>
                         <div className="text-slate-400 text-[9px] mt-1">Normal Traffic</div>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-500/40 text-rose-400">
-                        <div className="font-bold">OPEN</div>
-                        <div className="text-slate-400 text-[9px] mt-1">Cooldown 30s-600s</div>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/40 text-amber-400">
-                        <div className="font-bold">HALF-OPEN</div>
+                      </button>
+                      <button
+                        onClick={() => setSentinelState("OPEN")}
+                        className={`p-2.5 rounded-lg border transition ${
+                          sentinelState === "OPEN"
+                            ? "bg-rose-950/80 border-rose-400 text-rose-300 ring-2 ring-rose-500/40 shadow-lg shadow-rose-500/20"
+                            : "bg-slate-900/60 border-white/5 text-slate-400 hover:border-rose-500/30"
+                        }`}
+                      >
+                        <div className="font-bold flex items-center justify-center space-x-1">
+                          {sentinelState === "OPEN" && <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />}
+                          <span>OPEN</span>
+                        </div>
+                        <div className="text-slate-400 text-[9px] mt-1">Cooldown Active</div>
+                      </button>
+                      <button
+                        onClick={() => setSentinelState("HALF_OPEN")}
+                        className={`p-2.5 rounded-lg border transition ${
+                          sentinelState === "HALF_OPEN"
+                            ? "bg-amber-950/80 border-amber-400 text-amber-300 ring-2 ring-amber-500/40 shadow-lg shadow-amber-500/20"
+                            : "bg-slate-900/60 border-white/5 text-slate-400 hover:border-amber-500/30"
+                        }`}
+                      >
+                        <div className="font-bold flex items-center justify-center space-x-1">
+                          {sentinelState === "HALF_OPEN" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
+                          <span>HALF-OPEN</span>
+                        </div>
                         <div className="text-slate-400 text-[9px] mt-1">Canary Probe</div>
+                      </button>
+                    </div>
+
+                    {/* Interactive Simulator Bar */}
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/90 border border-white/10 text-[11px]">
+                      <span className="text-slate-400">Simulate Action:</span>
+                      <div className="flex space-x-1.5">
+                        <button
+                          onClick={() => setSentinelState("OPEN")}
+                          className="px-2 py-0.5 rounded bg-rose-950/60 text-rose-300 border border-rose-800/60 hover:bg-rose-900/60 text-[10px] font-mono transition"
+                        >
+                          + 429 Trip
+                        </button>
+                        <button
+                          onClick={() => setSentinelState("HALF_OPEN")}
+                          className="px-2 py-0.5 rounded bg-amber-950/60 text-amber-300 border border-amber-800/60 hover:bg-amber-900/60 text-[10px] font-mono transition"
+                        >
+                          Probe Canary
+                        </button>
+                        <button
+                          onClick={() => setSentinelState("CLOSED")}
+                          className="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 hover:bg-emerald-900/60 text-[10px] font-mono transition"
+                        >
+                          Recover
+                        </button>
                       </div>
                     </div>
 
                     <div className="p-3.5 rounded-xl bg-slate-900/90 border border-white/5 space-y-2 text-[11px]">
+                      <div className="flex justify-between text-slate-300">
+                        <span>Current State Status:</span>
+                        <span className={`font-bold font-mono ${
+                          sentinelState === "CLOSED"
+                            ? "text-emerald-400"
+                            : sentinelState === "OPEN"
+                            ? "text-rose-400"
+                            : "text-amber-400"
+                        }`}>
+                          {sentinelState === "CLOSED" && "Healthy (Key pool accepting 100% traffic)"}
+                          {sentinelState === "OPEN" && "Tripped (Backoff: 30.0s cooldown + jitter)"}
+                          {sentinelState === "HALF_OPEN" && "Canary in flight (1 probe request allowed)"}
+                        </span>
+                      </div>
                       <div className="flex justify-between text-slate-300">
                         <span>Consecutive Error Threshold:</span>
                         <span className="text-amber-400 font-bold">5 failures</span>

@@ -1,0 +1,25 @@
+{
+  "name": "veloroute",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise Universal AI Gateway, High-Availability LLM Routing & Token-Saviour Engine",
+  "workspaces": [
+    "website"
+  ],
+  "scripts": {
+    "dev": "npm --workspace=website run dev",
+    "build": "npm --workspace=website run build",
+    "start": "npm --workspace=website run start",
+    "lint": "npm --workspace=website run lint"
+  },
+  "keywords": [
+    "ai-gateway",
+    "llm-router",
+    "openai",
+    "anthropic",
+    "gemini",
+    "token-optimization"
+  ],
+  "author": "Mr. Gusu <monirmdmunna123@gmail.com>",
+  "license": "MIT"
+}

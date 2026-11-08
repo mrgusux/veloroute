@@ -5,13 +5,13 @@ metadata:
   labels:
     app.kubernetes.io/name: veloroute
     app.kubernetes.io/part-of: veloroute-ai-gateway
+# Note: For SQLite persistence (default), replica count is set to 1 and strategy
+# to Recreate to avoid Multi-Attach RWO volume conflicts and sqlite file locking.
+# For horizontal scaling (replicas >= 2), configure PostgreSQL or Redis in configmap.yaml.
 spec:
-  replicas: 2
+  replicas: 1
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: veloroute

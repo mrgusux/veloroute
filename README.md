@@ -157,10 +157,16 @@ docker compose logs -f
 
 ---
 
-### ☸️ Option C: Enterprise Kubernetes
+### ☸️ Option C: Enterprise Kubernetes & Helm
 
-Deploy VeloRoute to your Kubernetes cluster (EKS, GKE, AKS, or bare-metal):
+Deploy VeloRoute to your Kubernetes cluster (AWS EKS, GCP GKE, Azure AKS, or bare-metal):
 
+**Via Helm Chart (Recommended):**
+```bash
+helm install veloroute ./deploy/helm/veloroute
+```
+
+**Via Declarative Manifests:**
 ```bash
 # Apply ConfigMap, PVC, Deployment, and Service
 kubectl apply -f deploy/k8s/

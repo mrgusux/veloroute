@@ -63,6 +63,29 @@ message = client.messages.create(
 print(message.content[0].text)`,
   },
   {
+    id: "typescript",
+    name: "TypeScript (Node.js)",
+    lang: "typescript",
+    desc: "100% drop-in for official OpenAI & Anthropic Node.js SDKs in Next.js and backend apps.",
+    code: `import OpenAI from "openai";
+
+// Repoint baseURL to your VeloRoute gateway:
+const client = new OpenAI({
+  baseURL: "http://localhost:8000/v1",
+  apiKey: process.env.VELOROUTE_KEY || "sk-velo-prod-key",
+});
+
+const response = await client.chat.completions.create({
+  model: "smart",
+  messages: [
+    { role: "system", content: "You are an expert systems architect." },
+    { role: "user", content: "/terse Profile memory allocation in this Tokio service." },
+  ],
+});
+
+console.log(response.choices[0]?.message.content);`,
+  },
+  {
     id: "curl",
     name: "Raw cURL / HTTP",
     lang: "bash",

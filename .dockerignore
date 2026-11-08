@@ -14,9 +14,9 @@ htmlcov
 reference_repos
 scratch
 attachments
-website/node_modules
-website/.next
-website/out
+website/
+deploy/
+tests/
 veloroute.db
 veloroute.db-journal
 *.log

@@ -368,13 +368,23 @@ export default function TokenSimulator() {
                         : "text-slate-400 hover:text-white"
                     }`}
                   >
-                    Optimized Only
+                    AST Skeleton (-76%)
+                  </button>
+                  <button
+                    onClick={() => setActiveCodeDiff("original")}
+                    className={`px-2.5 py-1 rounded text-xs font-mono transition ${
+                      activeCodeDiff === "original"
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    Raw Prompt
                   </button>
                 </div>
               </div>
 
               <div className="p-4 bg-[#080c14] overflow-x-auto text-xs font-mono leading-relaxed">
-                {activeCodeDiff === "side-by-side" ? (
+                {activeCodeDiff === "side-by-side" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Raw Before */}
                     <div className="p-3.5 rounded-xl bg-slate-950/60 border border-rose-500/20">
@@ -408,10 +418,26 @@ export default function TokenSimulator() {
                       </div>
                     </div>
                   </div>
-                ) : (
+                )}
+                {activeCodeDiff === "optimized" && (
                   <div className="p-4 bg-slate-950/80 rounded-xl border border-emerald-500/30">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-emerald-500/20">
+                      <span className="text-emerald-400 font-bold text-xs">VeloRoute AST Skeleton (76 tokens)</span>
+                      <span className="text-emerald-400 font-mono text-[11px]">-76.5% tokens saved</span>
+                    </div>
                     <pre className="text-emerald-300 text-xs font-mono whitespace-pre overflow-x-auto">
                       {optimizedSnippet}
+                    </pre>
+                  </div>
+                )}
+                {activeCodeDiff === "original" && (
+                  <div className="p-4 bg-slate-950/80 rounded-xl border border-rose-500/30">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-rose-500/20">
+                      <span className="text-rose-400 font-bold text-xs">Uncompressed Prompt (324 tokens)</span>
+                      <span className="text-slate-500 font-mono text-[11px]">Zero compression</span>
+                    </div>
+                    <pre className="text-slate-300 text-xs font-mono whitespace-pre overflow-x-auto">
+                      {originalSnippet}
                     </pre>
                   </div>
                 )}

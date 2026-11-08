@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Copy,
   Check,
@@ -13,11 +13,31 @@ import {
   Layers,
   Database,
   Lock,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 
 export default function Hero() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"stream" | "resilience" | "kv">("stream");
+  const [stars, setStars] = useState<number | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  useEffect(() => {
+    fetch("https://api.github.com/repos/mrgusux/veloroute")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.stargazers_count === "number") {
+          setStars(data.stargazers_count);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const triggerSimulation = () => {
+    setIsSimulating(true);
+    setTimeout(() => setIsSimulating(false), 800);
+  };
 
   const dockerCommand =
     "docker run -d -p 8000:8000 -v veloroute_data:/data ghcr.io/mrgusux/veloroute:latest";
@@ -89,17 +109,20 @@ export default function Hero() {
             href="https://github.com/mrgusux/veloroute"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center space-x-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-medium text-sm border border-white/10 hover:border-white/20 transition shadow-lg shrink-0"
+            className="inline-flex items-center space-x-2.5 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-medium text-sm border border-white/10 hover:border-sky-500/40 transition shadow-lg shrink-0 group"
           >
             <span>Star on GitHub</span>
             <span className="text-amber-400 font-mono">★</span>
+            <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-xs border border-amber-500/30 group-hover:border-amber-400/60 transition">
+              {stars !== null ? stars : "★"}
+            </span>
           </a>
         </div>
 
         {/* Live Interactive Terminal Preview */}
         <div className="max-w-4xl mx-auto rounded-2xl glass-panel shadow-2xl overflow-hidden border border-white/10">
           {/* Terminal Title Bar */}
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-950/80 border-b border-white/10">
+          <div className="flex flex-wrap items-center justify-between px-4 py-3 bg-slate-950/80 border-b border-white/10 gap-2">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 rounded-full bg-rose-500/80" />
               <div className="w-3 h-3 rounded-full bg-amber-500/80" />
@@ -109,6 +132,14 @@ export default function Hero() {
               </span>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={triggerSimulation}
+                className="flex items-center space-x-1 px-2.5 py-1 rounded text-[11px] font-mono text-emerald-300 bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/40 transition"
+                title="Simulate incoming request trace"
+              >
+                <RotateCcw className={`w-3 h-3 ${isSimulating ? "animate-spin" : ""}`} />
+                <span>Re-simulate</span>
+              </button>
               <button
                 onClick={() => setActiveTab("stream")}
                 className={`px-2.5 py-1 rounded text-[11px] font-mono transition ${
@@ -144,6 +175,12 @@ export default function Hero() {
 
           {/* Terminal Body */}
           <div className="p-5 font-mono text-xs sm:text-sm bg-[#080c14]/90 text-slate-300 leading-relaxed overflow-x-auto min-h-[220px]">
+            {isSimulating && (
+              <div className="py-2.5 px-3.5 mb-3 rounded-lg bg-sky-950/70 border border-sky-500/40 text-sky-300 font-mono text-xs flex items-center space-x-2 animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
+                <span>[GATEWAY PROXY] Ingesting request, scrubbing Shannon entropy secrets, computing KV fingerprint...</span>
+              </div>
+            )}
             {activeTab === "stream" && (
               <div className="space-y-1.5 animate-fadeIn">
                 <p className="text-slate-500"># Inbound request to unified gateway port 8000</p>

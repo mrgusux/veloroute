@@ -46,3 +46,47 @@ jobs:
       - name: Run Full Unit & Integration Test Suite
         run: |
           python -m unittest discover -s tests -p "test_*.py"
+
+  website:
+    name: Website Lint & Next.js Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install dependencies
+        working-directory: website
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: website
+        run: npm run lint
+
+      - name: Build Next.js Production App
+        working-directory: website
+        run: npm run build
+
+  docker:
+    name: Docker Build Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: veloroute:test

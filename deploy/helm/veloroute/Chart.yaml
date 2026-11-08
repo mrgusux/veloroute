@@ -1,0 +1,19 @@
+apiVersion: v2
+name: veloroute
+description: Helm chart for VeloRoute Universal AI Gateway & High-Availability LLM Routing Engine
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - ai-gateway
+  - llm-router
+  - openai
+  - anthropic
+  - gemini
+  - token-optimization
+home: https://github.com/mrgusux/veloroute
+sources:
+  - https://github.com/mrgusux/veloroute
+maintainers:
+  - name: Mr. Gusu
+    email: monirmdmunna123@gmail.com

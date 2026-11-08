@@ -18,9 +18,9 @@ export default function DeploySection() {
   const dockerComposeCmd =
     "git clone https://github.com/mrgusux/veloroute.git\ncd veloroute\ndocker compose up -d";
 
-  const k8sCmd = "kubectl apply -f https://raw.githubusercontent.com/mrgusux/veloroute/main/deploy/k8s/deployment.yaml";
-
-  const pipCmd = "pip install veloroute\nveloroute ui";
+  const helmCmd = "helm install veloroute ./deploy/helm/veloroute";
+  const k8sCmd = "kubectl apply -f deploy/k8s/";
+  const pipCmd = "pip install -e . && veloroute ui";
 
   const vercelDeployUrl =
     "https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmrgusux%2Fveloroute&root-directory=website";
@@ -183,21 +183,73 @@ export default function DeploySection() {
                 </span>
               </div>
               <p className="text-sm text-slate-300 mb-4 leading-relaxed">
-                Deploy to AWS EKS, GCP GKE, or self-hosted k8s with zero-privilege securityContext,
-                rolling updates, and PVC storage.
+                Deploy to AWS EKS, GCP GKE, or k8s via Helm chart or standard declarative manifests
+                with zero-privilege securityContext and PVC persistence.
               </p>
             </div>
 
-            <div className="bg-[#080c14] border border-white/10 rounded-xl p-3 flex items-center justify-between">
-              <code className="text-xs font-mono text-emerald-300 truncate mr-2">
-                kubectl apply -f deploy/k8s/
-              </code>
+            <div className="space-y-2">
+              <div className="bg-[#080c14] border border-white/10 rounded-xl p-3 flex items-center justify-between">
+                <code className="text-xs font-mono text-emerald-300 truncate mr-2">
+                  {helmCmd}
+                </code>
+                <button
+                  onClick={() => copyText("helm", helmCmd)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0"
+                  title="Copy Helm Command"
+                >
+                  {copiedId === "helm" ? (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <div className="bg-[#080c14] border border-white/10 rounded-xl p-3 flex items-center justify-between">
+                <code className="text-xs font-mono text-slate-400 truncate mr-2">
+                  {k8sCmd}
+                </code>
+                <button
+                  onClick={() => copyText("k8s", k8sCmd)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0"
+                  title="Copy K8s Command"
+                >
+                  {copiedId === "k8s" ? (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 5: Python PIP Quickstart */}
+          <div className="md:col-span-2 glass-panel p-6 sm:p-8 rounded-2xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-950/60 border border-amber-500/30 flex items-center justify-center">
+                  <Terminal className="w-4 h-4 text-amber-400" />
+                </div>
+                <h3 className="text-base font-bold text-white">Local Python / CLI Quickstart</h3>
+                <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800">
+                  PyPI Ready
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+                Run natively in Python 3.11+ virtual environments with built-in doctor diagnostics,
+                recipe configurations, and zero heavy ML dependencies.
+              </p>
+            </div>
+
+            <div className="bg-[#080c14] border border-white/10 rounded-xl p-3 flex items-center justify-between w-full md:w-auto md:min-w-[340px]">
+              <code className="text-xs font-mono text-amber-300 mr-3">{pipCmd}</code>
               <button
-                onClick={() => copyText("k8s", "kubectl apply -f deploy/k8s/")}
+                onClick={() => copyText("pip", pipCmd)}
                 className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0"
-                title="Copy K8s Command"
+                title="Copy PIP Command"
               >
-                {copiedId === "k8s" ? (
+                {copiedId === "pip" ? (
                   <Check className="w-4 h-4 text-emerald-400" />
                 ) : (
                   <Copy className="w-4 h-4" />
