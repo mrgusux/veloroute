@@ -54,24 +54,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: "npm"
-          cache-dependency-path: website/package-lock.json
+          node-version: 22
 
       - name: Install dependencies
-        working-directory: website
-        run: npm ci
+        run: npm install --prefix website
 
       - name: Run ESLint
-        working-directory: website
-        run: npm run lint
+        run: npm run lint --prefix website
 
       - name: Build Next.js Production App
-        working-directory: website
-        run: npm run build
+        run: npm run build --prefix website
 
   docker:
     name: Docker Build Validation
