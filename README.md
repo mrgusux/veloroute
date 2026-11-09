@@ -2,7 +2,7 @@
 
 # ⚡ VeloRoute
 
-**Enterprise Universal AI Gateway, High-Availability LLM Routing & Token-Saviour Optimization Engine**
+**Enterprise Universal AI Gateway, High-Availability LLM Routing & Token Optimization Engine**
 
 [![Live Website](https://img.shields.io/badge/website-veloroute--tau.vercel.app-7928CA.svg?logo=vercel&logoColor=white)](https://veloroute-tau.vercel.app)
 [![CI](https://github.com/mrgusux/veloroute/actions/workflows/ci.yml/badge.svg)](https://github.com/mrgusux/veloroute/actions/workflows/ci.yml)
