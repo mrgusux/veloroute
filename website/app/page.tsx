@@ -1,6 +1,7 @@
 import CyberBackground from "@/components/CyberBackground";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import DirectorySection from "@/components/DirectorySection";
 import TokenSimulator from "@/components/TokenSimulator";
 import ArchitectureTabs from "@/components/ArchitectureTabs";
 import CodeSwitcher from "@/components/CodeSwitcher";
@@ -14,10 +15,7 @@ import {
   Cpu,
   RefreshCw,
   Lock,
-  GitCompare,
-  Terminal,
   Activity,
-  CheckCircle,
 } from "lucide-react";
 
 export default function Home() {
@@ -74,43 +72,46 @@ export default function Home() {
       <main className="flex-1 z-10">
         <Hero />
 
+        {/* Search Bar & Model Directory per DESIGN.md */}
+        <DirectorySection />
+
         {/* Feature Grid Section */}
         <section id="features" className="py-20 relative border-t border-[#18181C] bg-[#000000]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-none bg-[#111114] border border-[#18181C] text-[#FBFBFF] text-[11px] font-mono uppercase tracking-widest mb-4">
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-[120px]">
+            <div className="text-left max-w-3xl mb-12">
+              <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-none bg-[#18181C] text-[#FBFBFF] text-[11px] font-bold font-mono uppercase tracking-[0.1em] mb-3">
                 <Activity className="w-3.5 h-3.5 text-[#0055FF]" />
                 <span>CORE CAPABILITIES</span>
               </div>
-              <h2 className="text-3xl sm:text-5xl font-bold text-[#FBFBFF] tracking-tight">
-                Engineered for High-Throughput Production.
+              <h2 className="text-3xl sm:text-4xl lg:text-[2.625rem] font-semibold text-[#FBFBFF] tracking-[-0.025em] leading-[0.9]">
+                Engineered for High-Throughput Production
               </h2>
-              <p className="mt-4 text-[#A7A9B8] text-base sm:text-lg">
+              <p className="mt-3 text-sm sm:text-base text-[#A7A9B8] leading-relaxed">
                 Deterministic sub-millisecond routing, zero prompt retention, and mission-critical resilience.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {features.map((feat, idx) => {
                 const Icon = feat.icon;
                 return (
                   <div
                     key={idx}
-                    className="bg-[#0B0B0D] p-6 rounded-none border border-[#18181C] hover:border-white/20 transition-all flex flex-col justify-between"
+                    className="bg-[#0B0B0D] p-6 rounded-none border border-transparent hover:border-[#25252C] transition-all flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <div className="w-9 h-9 rounded-none bg-[#111114] border border-[#18181C] flex items-center justify-center">
                           <Icon className="w-4 h-4 text-[#0055FF]" />
                         </div>
-                        <span className="text-[10px] font-mono font-bold tracking-wider text-[#A7A9B8] bg-[#18181C] px-2.5 py-1 rounded-none uppercase">
+                        <span className="text-[10px] font-mono font-bold tracking-[0.1em] text-[#A7A9B8] bg-[#18181C] px-2.5 py-1 rounded-none uppercase">
                           {feat.tag}
                         </span>
                       </div>
                       <h3 className="text-base font-semibold text-[#FBFBFF] mb-2 tracking-tight">
                         {feat.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#A7A9B8] leading-relaxed">{feat.description}</p>
+                      <p className="text-xs sm:text-sm text-[#A7A9B8] leading-relaxed font-normal">{feat.description}</p>
                     </div>
                   </div>
                 );
