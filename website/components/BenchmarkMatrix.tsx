@@ -122,19 +122,19 @@ export default function BenchmarkMatrix() {
       return val ? (
         <div className="flex items-center justify-center">
           <span
-            className={`w-6 h-6 rounded-full flex items-center justify-center ${
+            className={`w-5 h-5 rounded-none flex items-center justify-center ${
               isVelo
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                : "bg-slate-800 text-slate-400"
+                ? "bg-[#0055FF] text-[#FBFBFF]"
+                : "bg-[#18181C] text-[#A7A9B8]"
             }`}
           >
-            <Check className="w-4 h-4 stroke-[2.5]" />
+            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
           </span>
         </div>
       ) : (
         <div className="flex items-center justify-center">
-          <span className="w-6 h-6 rounded-full flex items-center justify-center bg-rose-500/10 text-rose-500/70 border border-rose-500/20">
-            <X className="w-3.5 h-3.5 stroke-[2]" />
+          <span className="w-5 h-5 rounded-none flex items-center justify-center bg-[#18181C] text-[#5B5D6B]">
+            <X className="w-3 h-3 stroke-[2]" />
           </span>
         </div>
       );
@@ -142,7 +142,7 @@ export default function BenchmarkMatrix() {
     return (
       <span
         className={`font-mono text-xs ${
-          isVelo ? "text-emerald-400 font-bold" : "text-slate-300"
+          isVelo ? "text-[#0055FF] font-bold" : "text-[#A7A9B8]"
         }`}
       >
         {val}
@@ -151,29 +151,29 @@ export default function BenchmarkMatrix() {
   };
 
   return (
-    <section id="benchmarks" className="py-24 relative border-t border-white/5 bg-[#080c14]/40">
+    <section id="benchmarks" className="py-24 relative border-t border-[#18181C] bg-[#000000]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-500/30 text-amber-400 text-xs font-mono mb-4">
-            <Trophy className="w-3.5 h-3.5" />
-            <span>Architecture Benchmark</span>
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-none bg-[#111114] border border-[#18181C] text-[#0055FF] text-[11px] font-mono uppercase tracking-widest mb-4">
+            <Trophy className="w-3.5 h-3.5 text-[#0055FF]" />
+            <span>ARCHITECTURE BENCHMARK</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-bold text-[#FBFBFF] tracking-tight">
             How VeloRoute Compares.
           </h2>
-          <p className="mt-4 text-slate-400 text-base sm:text-lg">
+          <p className="mt-4 text-[#A7A9B8] text-base sm:text-lg">
             Built from first principles for ultra-low latency, zero mandatory database dependencies,
             and deterministic token optimization.
           </p>
         </div>
 
         {/* Comparison Table */}
-        <div className="overflow-x-auto rounded-2xl glass-panel border border-white/10 shadow-2xl">
+        <div className="overflow-x-auto rounded-none bg-[#0B0B0D] border border-[#18181C] shadow-none">
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
-              <tr className="border-b border-white/10 bg-slate-950/90 text-xs uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-[#18181C] bg-[#000000] text-xs uppercase tracking-wider text-[#A7A9B8]">
                 <th className="py-4 px-6 font-semibold">Capability</th>
-                <th className="py-4 px-6 font-semibold text-center bg-sky-950/40 border-x border-sky-500/30 text-sky-300">
+                <th className="py-4 px-6 font-semibold text-center bg-[#111114] border-x border-[#18181C] text-[#0055FF]">
                   ⚡ VeloRoute
                 </th>
                 <th className="py-4 px-6 font-semibold text-center">LiteLLM</th>
@@ -181,21 +181,21 @@ export default function BenchmarkMatrix() {
                 <th className="py-4 px-6 font-semibold text-center">Raw Provider APIs</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 text-sm">
+            <tbody className="divide-y divide-[#18181C] text-sm">
               {COMPARISON.map((row, idx) => (
                 <tr
                   key={idx}
-                  className={`hover:bg-slate-900/50 transition-colors ${
-                    row.highlight ? "bg-white/[0.01]" : ""
+                  className={`hover:bg-[#111114] transition-colors ${
+                    row.highlight ? "bg-white/[0.02]" : ""
                   }`}
                 >
-                  <td className="py-3.5 px-6 font-medium text-slate-200">
+                  <td className="py-3.5 px-6 font-medium text-[#DFE0EA]">
                     <div className="flex flex-col">
                       <span>{row.feature}</span>
-                      <span className="text-[10px] text-slate-500 font-mono">{row.category}</span>
+                      <span className="text-[10px] text-[#5B5D6B] font-mono uppercase tracking-wider">{row.category}</span>
                     </div>
                   </td>
-                  <td className="py-3.5 px-6 text-center bg-sky-950/20 border-x border-sky-500/20">
+                  <td className="py-3.5 px-6 text-center bg-[#111114]/80 border-x border-[#18181C]">
                     {renderValue(row.veloroute, true)}
                   </td>
                   <td className="py-3.5 px-6 text-center">{renderValue(row.litellm, false)}</td>

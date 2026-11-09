@@ -131,35 +131,35 @@ export default function CodeSwitcher() {
   };
 
   return (
-    <section id="code" className="py-24 relative border-t border-white/5 bg-[#070a10]">
+    <section id="code" className="py-24 relative border-t border-[#18181C] bg-[#000000]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/30 text-purple-400 text-xs font-mono mb-4">
-            <Code2 className="w-3.5 h-3.5" />
-            <span>Drop-In Compatibility</span>
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-none bg-[#111114] border border-[#18181C] text-[#0055FF] text-[11px] font-mono uppercase tracking-widest mb-4">
+            <Code2 className="w-3.5 h-3.5 text-[#0055FF]" />
+            <span>DROP-IN COMPATIBILITY</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-bold text-[#FBFBFF] tracking-tight">
             1 Line of Code to Switch.
           </h2>
-          <p className="mt-4 text-slate-400 text-base sm:text-lg">
+          <p className="mt-4 text-[#A7A9B8] text-base sm:text-lg">
             No proprietary SDKs. Use the official OpenAI, Anthropic, or Ollama clients you already
-            know. Simply repoint your <code className="text-sky-300 font-mono">base_url</code>.
+            know. Simply repoint your <code className="text-[#0055FF] font-mono">base_url</code>.
           </p>
         </div>
 
         {/* Code Box Container */}
-        <div className="max-w-4xl mx-auto rounded-2xl glass-panel border border-white/10 overflow-hidden shadow-2xl">
+        <div className="max-w-4xl mx-auto rounded-none bg-[#0B0B0D] border border-[#18181C] overflow-hidden shadow-none">
           {/* Top Bar with Tabs and Copy Button */}
-          <div className="flex flex-wrap items-center justify-between px-4 py-3 bg-slate-950/90 border-b border-white/10 gap-2">
+          <div className="flex flex-wrap items-center justify-between px-4 py-3 bg-[#000000] border-b border-[#18181C] gap-2">
             <div className="flex items-center space-x-1.5 overflow-x-auto no-scrollbar">
               {SNIPPETS.map((snip) => (
                 <button
                   key={snip.id}
                   onClick={() => setActiveTab(snip.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono transition whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-none text-xs font-mono uppercase tracking-wider transition whitespace-nowrap ${
                     activeTab === snip.id
-                      ? "bg-sky-500/20 text-sky-300 border border-sky-500/40"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-[#0055FF] text-[#FBFBFF]"
+                      : "text-[#A7A9B8] hover:text-[#FBFBFF]"
                   }`}
                 >
                   {snip.name}
@@ -169,13 +169,13 @@ export default function CodeSwitcher() {
 
             <button
               onClick={handleCopy}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-mono border border-white/10 transition"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-none bg-[#111114] hover:bg-[#18181C] text-[#DFE0EA] text-xs font-mono uppercase tracking-wider border border-[#18181C] transition"
               title="Copy code to clipboard"
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">Copied!</span>
+                  <Check className="w-3.5 h-3.5 text-[#0055FF]" />
+                  <span className="text-[#0055FF]">COPIED</span>
                 </>
               ) : (
                 <>
@@ -187,16 +187,16 @@ export default function CodeSwitcher() {
           </div>
 
           {/* Description sub-strip */}
-          <div className="px-5 py-2.5 bg-slate-900/60 border-b border-white/5 text-xs text-slate-400 flex items-center justify-between">
+          <div className="px-5 py-2.5 bg-[#111114] border-b border-[#18181C] text-xs text-[#A7A9B8] flex items-center justify-between">
             <span>{current.desc}</span>
-            <span className="text-[10px] font-mono text-sky-400 uppercase tracking-wider">
+            <span className="text-[10px] font-mono text-[#0055FF] uppercase tracking-wider font-bold">
               {current.lang}
             </span>
           </div>
 
           {/* Code Content */}
-          <div className="p-5 sm:p-6 bg-[#080c14] overflow-x-auto">
-            <pre className="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre">
+          <div className="p-5 sm:p-6 bg-[#0B0B0D] overflow-x-auto">
+            <pre className="font-mono text-xs sm:text-sm text-[#DFE0EA] leading-relaxed whitespace-pre">
               {current.code}
             </pre>
           </div>

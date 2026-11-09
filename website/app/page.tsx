@@ -67,7 +67,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="relative min-h-screen bg-[#07090e] text-slate-100 flex flex-col selection:bg-sky-500/30 selection:text-sky-300">
+    <div className="relative min-h-screen bg-[#000000] text-[#DFE0EA] flex flex-col selection:bg-[#0055FF]/40 selection:text-[#FBFBFF]">
       <CyberBackground />
       <Navbar />
 
@@ -75,19 +75,18 @@ export default function Home() {
         <Hero />
 
         {/* Feature Grid Section */}
-        <section id="features" className="py-20 relative border-t border-white/5 bg-[#090d16]/30">
+        <section id="features" className="py-20 relative border-t border-[#18181C] bg-[#000000]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-sky-950/60 border border-sky-500/30 text-sky-400 text-xs font-mono mb-4">
-                <Activity className="w-3.5 h-3.5" />
-                <span>Core Capabilities</span>
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-none bg-[#111114] border border-[#18181C] text-[#FBFBFF] text-[11px] font-mono uppercase tracking-widest mb-4">
+                <Activity className="w-3.5 h-3.5 text-[#0055FF]" />
+                <span>CORE CAPABILITIES</span>
               </div>
-              <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-                Built for High-Throughput Production.
+              <h2 className="text-3xl sm:text-5xl font-bold text-[#FBFBFF] tracking-tight">
+                Engineered for High-Throughput Production.
               </h2>
-              <p className="mt-4 text-slate-400 text-base sm:text-lg">
-                Engineered from the ground up for extreme concurrency, deterministic cost reduction,
-                and mission-critical resilience.
+              <p className="mt-4 text-[#A7A9B8] text-base sm:text-lg">
+                Deterministic sub-millisecond routing, zero prompt retention, and mission-critical resilience.
               </p>
             </div>
 
@@ -97,21 +96,21 @@ export default function Home() {
                 return (
                   <div
                     key={idx}
-                    className="glass-panel p-6 rounded-2xl border border-white/10 glass-panel-hover group flex flex-col justify-between"
+                    className="bg-[#0B0B0D] p-6 rounded-none border border-[#18181C] hover:border-white/20 transition-all flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-slate-900 border border-sky-500/30 flex items-center justify-center group-hover:border-sky-400 transition">
-                          <Icon className="w-5 h-5 text-sky-400 group-hover:scale-110 transition-transform" />
+                        <div className="w-9 h-9 rounded-none bg-[#111114] border border-[#18181C] flex items-center justify-center">
+                          <Icon className="w-4 h-4 text-[#0055FF]" />
                         </div>
-                        <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded-md border border-white/5">
+                        <span className="text-[10px] font-mono font-bold tracking-wider text-[#A7A9B8] bg-[#18181C] px-2.5 py-1 rounded-none uppercase">
                           {feat.tag}
                         </span>
                       </div>
-                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-sky-300 transition-colors">
+                      <h3 className="text-base font-semibold text-[#FBFBFF] mb-2 tracking-tight">
                         {feat.title}
                       </h3>
-                      <p className="text-sm text-slate-400 leading-relaxed">{feat.description}</p>
+                      <p className="text-xs sm:text-sm text-[#A7A9B8] leading-relaxed">{feat.description}</p>
                     </div>
                   </div>
                 );

@@ -45,7 +45,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark scroll-smooth">
-      <body className="bg-[#07090e] text-slate-100 antialiased selection:bg-sky-500/30 selection:text-sky-300">
+      <body className="bg-[#000000] text-[#DFE0EA] antialiased selection:bg-[#0055FF]/40 selection:text-[#FBFBFF]">
         {children}
       </body>
     </html>

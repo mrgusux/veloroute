@@ -32,26 +32,24 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#07090e]/80 backdrop-blur-xl transition-all">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#18181C] bg-[#000000]/90 backdrop-blur-md transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Version */}
           <div className="flex items-center space-x-3">
             <Link href="/" className="flex items-center space-x-2.5 group">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-sky-500 to-emerald-400 p-[1px] shadow-lg shadow-sky-500/20 group-hover:shadow-sky-500/40 transition">
-                <div className="w-full h-full bg-[#07090e] rounded-[7px] flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-sky-400 group-hover:scale-110 transition-transform" />
-                </div>
+              <div className="w-8 h-8 rounded-none bg-[#0055FF] flex items-center justify-center transition-transform group-hover:scale-105">
+                <Zap className="w-4 h-4 text-[#FBFBFF]" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-white group-hover:text-sky-300 transition-colors">
-                Velo<span className="text-sky-400">Route</span>
+              <span className="text-lg font-bold tracking-tight text-[#FBFBFF] group-hover:text-white transition-colors">
+                VELO<span className="text-[#0055FF]">ROUTE</span>
               </span>
             </Link>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-sky-950/60 text-sky-400 border border-sky-800/40">
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-none text-[10px] font-mono font-bold tracking-wider bg-[#111114] text-[#A7A9B8] border border-[#18181C] uppercase">
               v1.0.0
             </span>
-            <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
-              Zero-Heavy-ML
+            <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-none text-[10px] font-mono font-bold tracking-wider bg-[#111114] text-[#0055FF] border border-[#18181C] uppercase">
+              ZERO-HEAVY-ML
             </span>
           </div>
 
@@ -61,7 +59,7 @@ export default function Navbar() {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                className="text-sm font-normal text-[#DFE0EA] hover:text-[#FBFBFF] transition-colors"
               >
                 {link.label}
               </a>
@@ -74,23 +72,23 @@ export default function Navbar() {
               href="https://github.com/mrgusux/veloroute"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-200 border border-white/10 hover:border-slate-600 transition"
+              className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-none text-xs font-medium bg-[#0B0B0D] hover:bg-[#111114] text-[#DFE0EA] border border-[#18181C] hover:border-white/30 transition"
               title="View repository on GitHub"
             >
-              <Github className="w-4 h-4 text-slate-300" />
-              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <Github className="w-3.5 h-3.5 text-[#DFE0EA]" />
+              <Star className="w-3 h-3 text-[#DFE0EA]" />
               <span>Star</span>
-              <span className="px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded font-mono text-[11px]">
+              <span className="px-1.5 py-0.2 bg-[#18181C] text-[#FBFBFF] rounded-none font-mono text-[10px]">
                 {stars !== null ? stars : "★"}
               </span>
             </a>
 
             <a
               href="#quickstart"
-              className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-slate-950 font-mono shadow-md shadow-sky-500/20 hover:shadow-sky-500/40 transition active:scale-95"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-none text-xs font-semibold bg-[#0055FF] hover:bg-[#0044CC] text-[#FBFBFF] transition active:scale-95"
             >
               <Terminal className="w-3.5 h-3.5" />
-              <span>Deploy Now</span>
+              <span className="tracking-wide uppercase">Deploy Now</span>
             </a>
           </div>
 
@@ -100,14 +98,14 @@ export default function Navbar() {
               href="https://github.com/mrgusux/veloroute"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-lg bg-slate-900 border border-white/10 text-slate-300"
+              className="p-2 rounded-none bg-[#0B0B0D] border border-[#18181C] text-[#DFE0EA]"
               aria-label="GitHub Repository"
             >
               <Github className="w-4 h-4" />
             </a>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg bg-slate-900 text-slate-300 hover:text-white border border-white/10"
+              className="p-2 rounded-none bg-[#0B0B0D] text-[#DFE0EA] hover:text-[#FBFBFF] border border-[#18181C]"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -118,37 +116,37 @@ export default function Navbar() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-b border-white/10 bg-[#0c1017]/95 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3">
+        <div className="lg:hidden border-b border-[#18181C] bg-[#0B0B0D] px-4 pt-3 pb-6 space-y-3">
           <div className="flex flex-col space-y-2">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-slate-200 hover:bg-slate-800 hover:text-sky-400 transition"
+                className="px-3 py-2 rounded-none text-sm font-medium text-[#DFE0EA] hover:bg-[#18181C] hover:text-[#FBFBFF] transition"
               >
                 {link.label}
               </a>
             ))}
           </div>
-          <div className="pt-2 border-t border-white/10 flex flex-col space-y-2">
+          <div className="pt-2 border-t border-[#18181C] flex flex-col space-y-2">
             <a
               href="https://github.com/mrgusux/veloroute"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg text-sm bg-slate-900 border border-white/10 text-slate-200 font-medium"
+              className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-none text-sm bg-[#111114] border border-[#18181C] text-[#DFE0EA] font-medium"
             >
               <Github className="w-4 h-4" />
               <span>Star on GitHub</span>
-              <span className="font-mono text-xs text-amber-400">★</span>
+              <span className="font-mono text-xs text-[#A7A9B8]">★</span>
             </a>
             <a
               href="#quickstart"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-sky-500 to-emerald-500 text-slate-950 font-mono"
+              className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-none text-sm font-semibold bg-[#0055FF] text-[#FBFBFF]"
             >
               <Terminal className="w-4 h-4" />
-              <span>Deploy Now</span>
+              <span className="tracking-wide uppercase">Deploy Now</span>
             </a>
           </div>
         </div>

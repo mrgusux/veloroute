@@ -50,7 +50,7 @@ export default function CyberBackground() {
 
         ctx.beginPath();
         ctx.arc(p1.x, p1.y, p1.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(56, 189, 248, ${p1.alpha * 0.6})`;
+        ctx.fillStyle = `rgba(0, 85, 255, ${p1.alpha * 0.4})`;
         ctx.fill();
 
         for (let j = i + 1; j < particles.length; j++) {
@@ -63,10 +63,10 @@ export default function CyberBackground() {
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(56, 189, 248, ${
-              (1 - dist / 130) * 0.12
+            ctx.strokeStyle = `rgba(0, 85, 255, ${
+              (1 - dist / 130) * 0.08
             })`;
-            ctx.lineWidth = 0.75;
+            ctx.lineWidth = 0.5;
             ctx.stroke();
           }
         }
@@ -84,13 +84,12 @@ export default function CyberBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {/* Background radial gradient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-gradient-radial from-sky-500/10 via-sky-950/5 to-transparent blur-3xl opacity-60" />
-      <div className="absolute bottom-1/4 right-10 w-[600px] h-[400px] bg-gradient-radial from-emerald-500/10 via-emerald-950/5 to-transparent blur-3xl opacity-40" />
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#000000]">
+      {/* Subtle hairline gradient overlay */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[450px] bg-gradient-radial from-[#0055FF]/5 via-transparent to-transparent opacity-50" />
       <canvas
         ref={canvasRef}
-        className="w-full h-full opacity-70"
+        className="w-full h-full opacity-60"
       />
     </div>
   );

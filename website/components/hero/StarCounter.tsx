@@ -21,11 +21,11 @@ export default function StarCounter() {
       href="https://github.com/mrgusux/veloroute"
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center space-x-2.5 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-medium text-sm border border-white/10 hover:border-sky-500/40 transition shadow-lg shrink-0 group"
+      className="inline-flex items-center space-x-2.5 px-5 py-3 rounded-none bg-transparent hover:bg-white/5 text-[#FBFBFF] font-medium text-xs uppercase tracking-wider border border-[#18181C] hover:border-white transition shrink-0 group"
     >
       <span>Star on GitHub</span>
-      <span className="text-amber-400 font-mono">★</span>
-      <span className="px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-xs border border-amber-500/30 group-hover:border-amber-400/60 transition">
+      <span className="text-[#DFE0EA] font-mono">★</span>
+      <span className="px-2 py-0.5 rounded-none bg-[#18181C] text-[#FBFBFF] font-mono text-[11px] border border-[#18181C] group-hover:border-white/40 transition">
         {stars !== null ? stars : "★"}
       </span>
     </a>
