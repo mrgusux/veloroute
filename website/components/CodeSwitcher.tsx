@@ -132,7 +132,7 @@ export default function CodeSwitcher() {
 
   return (
     <section id="code" className="py-24 relative border-t border-[#18181C] bg-[#000000]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-[120px]">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-none bg-[#111114] border border-[#18181C] text-[#0055FF] text-[11px] font-mono uppercase tracking-widest mb-4">
             <Code2 className="w-3.5 h-3.5 text-[#0055FF]" />

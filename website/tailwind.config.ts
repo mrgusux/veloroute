@@ -43,9 +43,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
-        display: ["Stack Sans Notch", "Inter", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        display: ["Stack Sans Notch", "var(--font-inter)", "Inter", "sans-serif"],
         mono: [
+          "var(--font-mono)",
           "JetBrains Mono",
           "ui-monospace",
           "SFMono-Regular",
