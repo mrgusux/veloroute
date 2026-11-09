@@ -62,6 +62,7 @@ coverage.xml
 *.db-wal
 veloroute.db
 attachments/
+data/
 
 # Environments & secrets
 .env
