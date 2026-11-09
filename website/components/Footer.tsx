@@ -33,6 +33,22 @@ export default function Footer() {
               <span className="px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#A7A9B8] border border-[#18181C] bg-[#111114]">
                 MIT Licensed
               </span>
+              <a
+                href="https://discord.gg/veloroute"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-none text-xs font-mono uppercase tracking-wider text-[#FBFBFF] border border-[#FFFFFF] hover:bg-white hover:text-black transition bg-transparent"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Join Discord</span>
+              </a>
+              <a
+                href="mailto:support@veloroute.dev"
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-none text-xs font-mono uppercase tracking-wider text-[#FBFBFF] border border-[#FFFFFF] hover:bg-white hover:text-black transition bg-transparent"
+              >
+                <LifeBuoy className="w-3.5 h-3.5" />
+                <span>Client Support</span>
+              </a>
             </div>
           </div>
 

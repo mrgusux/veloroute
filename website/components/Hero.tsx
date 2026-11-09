@@ -20,14 +20,14 @@ export default function Hero() {
 
         {/* Main Headline */}
         <div className="text-center max-w-4xl mx-auto mb-8">
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[#FBFBFF] leading-[1.05]">
+          <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-semibold tracking-[-0.025em] text-[#FBFBFF] leading-none">
             Ultra-Fast Universal AI Gateway.{" "}
             <span className="text-[#0055FF]">
               Zero Retention.
             </span>{" "}
             Native Token Savings.
           </h1>
-          <p className="mt-6 text-base sm:text-lg text-[#DFE0EA] max-w-2xl mx-auto font-normal leading-relaxed">
+          <p className="mt-6 text-[1.09375rem] leading-[1.625] text-[#DFE0EA] max-w-2xl mx-auto font-normal">
             Eliminate LLM outages with automated sentinel circuit breakers, speculative hedging,
             and AST context compression. Route across OpenAI, Anthropic, Gemini, Groq,
             and local Ollama with <span className="text-[#FBFBFF] font-semibold font-mono border-b border-[#0055FF] pb-0.5">&lt; 0.8ms</span> overhead.
@@ -58,7 +58,7 @@ export default function Hero() {
             <div className="text-xs uppercase tracking-wider text-[#A7A9B8] mt-1 font-mono">Auto-Failover</div>
           </div>
           <div className="bg-[#0B0B0D] p-5 rounded-none border border-[#18181C] text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-[#FBFBFF] font-mono">224+ / 224+</div>
+            <div className="text-2xl sm:text-3xl font-bold text-[#FBFBFF] font-mono">225 / 225</div>
             <div className="text-xs uppercase tracking-wider text-[#A7A9B8] mt-1 font-mono">Unit Tests Passing</div>
           </div>
         </div>
