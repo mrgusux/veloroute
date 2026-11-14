@@ -591,7 +591,8 @@ async def openai_proxy_chat_completions(req: Dict[str, Any], request: Request):
 
                 await producer_task
             except asyncio.CancelledError:
-                raise
+                # Client disconnected before stream finished (normal in fast SSE consumers)
+                return
             except Exception as exc:
                 # Once SSE headers have been sent, report failure using the
                 # OpenAI error envelope. Never turn an upstream failure into
@@ -610,14 +611,18 @@ async def openai_proxy_chat_completions(req: Dict[str, Any], request: Request):
                         await producer_task
                     except (asyncio.CancelledError, Exception):
                         pass
-                await _record_gateway_usage(
-                    gateway_key,
-                    reservation_id,
-                    model=model,
-                    prompt_tokens=prompt_tokens_est,
-                    completion_tokens=completion_tokens_est,
-                    estimated_tokens=prompt_tokens_est,
-                )
+                if gateway_key is not None:
+                    try:
+                        await asyncio.shield(_record_gateway_usage(
+                            gateway_key,
+                            reservation_id,
+                            model=model,
+                            prompt_tokens=prompt_tokens_est,
+                            completion_tokens=completion_tokens_est,
+                            estimated_tokens=prompt_tokens_est,
+                        ))
+                    except Exception:
+                        pass
 
         headers = {
             "Cache-Control": "no-cache, no-transform",

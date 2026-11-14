@@ -34,13 +34,32 @@ async def lifespan(app: FastAPI):
 # ─── App setup ───────────────────────────────────────────────────────────────
 app = FastAPI(title="VeloRoute Dashboard API", version="2.0", lifespan=lifespan)
 
-@app.middleware("http")
-async def security_headers_middleware(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    return response
+class SecurityHeadersMiddleware:
+    """
+    Pure ASGI middleware for HTTP security headers.
+    Avoids Starlette BaseHTTPMiddleware task cancel-scope bugs on streaming responses.
+    """
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers.append((b"x-content-type-options", b"nosniff"))
+                headers.append((b"x-frame-options", b"DENY"))
+                headers.append((b"x-xss-protection", b"1; mode=block"))
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

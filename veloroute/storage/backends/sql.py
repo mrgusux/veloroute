@@ -297,8 +297,10 @@ class SQLStorage(BaseStorage):
             self._engine = self.driver.get_engine()
             self._session_factory = self.driver.get_sessionmaker()
         else:
-            connect_args = {"check_same_thread": False} if "sqlite" in self.url else {}
-            kw = {"poolclass": NullPool} if "sqlite" in self.url else {}
+            connect_args = {"check_same_thread": False, "timeout": 30.0} if "sqlite" in self.url else {}
+            kw = {"pool_pre_ping": True}
+            if "sqlite" in self.url:
+                kw["pool_recycle"] = 3600
             self._engine = create_async_engine(self.url, echo=False, connect_args=connect_args, **kw)
             self._session_factory = async_sessionmaker(self._engine, expire_on_commit=False)
         async with self._engine.begin() as conn:
@@ -437,36 +439,42 @@ class SQLStorage(BaseStorage):
         return Session(id=r.id, user_id=r.user_id, team_id=r.team_id, model=r.model, started_at=r.started_at, ended_at=r.ended_at, total_requests=r.total_requests, total_tokens=r.total_tokens, metadata=_u(r.metadata_))
 
     # ── Requests ─────────────────────────────────────────────────────
-    async def save_request(self, req: LLMRequest) -> LLMRequest:
-        async with self._s() as s:
-            s.add(RequestRow(
-                id=req.id, session_id=req.session_id,
-                user_id=req.user_id,
-                team_id=getattr(req, 'team_id', None),
-                workplace_id=getattr(req, 'workplace_id', None),
-                parent_request_id=getattr(req, 'parent_request_id', None),
-                turn_number=getattr(req, 'turn_number', 0),
-                model=req.model, provider=req.provider,
-                prompt=req.prompt, response=req.response,
-                prompt_tokens=req.prompt_tokens,
-                completion_tokens=req.completion_tokens,
-                total_tokens=getattr(req, 'total_tokens', req.prompt_tokens + req.completion_tokens),
-                latency_ms=req.latency_ms,
-                time_to_first_token_ms=getattr(req, 'time_to_first_token_ms', None),
-                status=req.status, error=req.error,
-                fallback_used=req.fallback_used, retries=req.retries,
-                cancelled_at=getattr(req, 'cancelled_at', None),
-                timeout_ms=getattr(req, 'timeout_ms', None),
-                cost_usd=getattr(req, 'cost_usd', None),
-                input_cost_per_1k=getattr(req, 'input_cost_per_1k', None),
-                output_cost_per_1k=getattr(req, 'output_cost_per_1k', None),
-                tags=_j(getattr(req, 'tags', [])),
-                has_tool_calls=getattr(req, 'has_tool_calls', False),
-                is_cached=getattr(req, 'is_cached', False),
-                created_at=req.created_at, metadata_=_j(req.metadata),
-            ))
-            await s.commit()
-        return req
+    async def save_request(self, req: LLMRequest) -> Optional[LLMRequest]:
+        try:
+            async with self._s() as s:
+                s.add(RequestRow(
+                    id=req.id, session_id=req.session_id,
+                    user_id=req.user_id,
+                    team_id=getattr(req, 'team_id', None),
+                    workplace_id=getattr(req, 'workplace_id', None),
+                    parent_request_id=getattr(req, 'parent_request_id', None),
+                    turn_number=getattr(req, 'turn_number', 0),
+                    model=req.model, provider=req.provider,
+                    prompt=req.prompt, response=req.response,
+                    prompt_tokens=req.prompt_tokens,
+                    completion_tokens=req.completion_tokens,
+                    total_tokens=getattr(req, 'total_tokens', req.prompt_tokens + req.completion_tokens),
+                    latency_ms=req.latency_ms,
+                    time_to_first_token_ms=getattr(req, 'time_to_first_token_ms', None),
+                    status=req.status, error=req.error,
+                    fallback_used=req.fallback_used, retries=req.retries,
+                    cancelled_at=getattr(req, 'cancelled_at', None),
+                    timeout_ms=getattr(req, 'timeout_ms', None),
+                    cost_usd=getattr(req, 'cost_usd', None),
+                    input_cost_per_1k=getattr(req, 'input_cost_per_1k', None),
+                    output_cost_per_1k=getattr(req, 'output_cost_per_1k', None),
+                    tags=_j(getattr(req, 'tags', [])),
+                    has_tool_calls=getattr(req, 'has_tool_calls', False),
+                    is_cached=getattr(req, 'is_cached', False),
+                    created_at=req.created_at, metadata_=_j(req.metadata),
+                ))
+                await s.commit()
+            return req
+        except asyncio.CancelledError:
+            return None
+        except Exception as e:
+            logger.debug("save_request non-fatal failure: %s", e)
+            return None
 
     async def get_request(self, id: str) -> Optional[LLMRequest]:
         async with self._s() as s:

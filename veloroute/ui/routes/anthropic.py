@@ -275,13 +275,19 @@ async def anthropic_messages_endpoint(
 
                 # Record virtual key usage
                 if authorized_key and reservation_id:
-                    await llm_client.virtual_keys.record_usage(
-                        authorized_key.id,
-                        prompt_tokens=input_tokens,
-                        completion_tokens=max(1, out_tokens),
-                        reserved_tokens=req.max_tokens,
-                        reservation_id=reservation_id,
-                    )
+                    try:
+                        await asyncio.shield(llm_client.virtual_keys.record_usage(
+                            authorized_key.id,
+                            prompt_tokens=input_tokens,
+                            completion_tokens=max(1, out_tokens),
+                            reserved_tokens=req.max_tokens,
+                            reservation_id=reservation_id,
+                        ))
+                    except Exception:
+                        pass
+            except asyncio.CancelledError:
+                # Client disconnected before stream finished
+                return
             except Exception as e:
                 err_payload = {
                     "type": "error",

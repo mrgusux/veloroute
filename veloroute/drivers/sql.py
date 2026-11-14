@@ -55,8 +55,10 @@ class SQLDriver(BaseDriver):
                 ) from e
                 
             # Connect args logic identical to sql.py
-            kw = {"poolclass": NullPool} if "sqlite" in self.url else {}
-            connect_args = {"check_same_thread": False} if "sqlite" in self.url else {}
+            connect_args = {"check_same_thread": False, "timeout": 30.0} if "sqlite" in self.url else {}
+            kw = {"pool_pre_ping": True}
+            if "sqlite" in self.url:
+                kw["pool_recycle"] = 3600
             self._engine = create_async_engine(
                 self.url,
                 echo=False,
