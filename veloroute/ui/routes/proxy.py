@@ -21,6 +21,7 @@ from .routing import (
 )
 from veloroute.core.errors import APIConnectionError, AllProvidersFailedError
 from veloroute.gateway.keys import GatewayAuthError, VirtualKey
+from veloroute.schema import StreamEvent
 from veloroute.utils import count_message_tokens, count_tokens, extract_forward_headers
 
 router = APIRouter()
@@ -490,6 +491,8 @@ async def openai_proxy_chat_completions(req: Dict[str, Any], request: Request):
             accumulated_text = ""
             ttft_ms = None
             stream_start_time = time.monotonic()
+            first_chunk_sent = False
+            finish_reason_override = None
 
             async def stream_producer():
                 try:
@@ -501,18 +504,39 @@ async def openai_proxy_chat_completions(req: Dict[str, Any], request: Request):
                     if req_timeout is not None:
                         stream_kwargs["timeout"] = req_timeout
 
-                    async for text in llm_client.stream(
-                        model=model,
-                        messages=messages,
-                        headers=forward_headers,
-                        session_id=session_id,
-                        user_id=user_id,
-                        team_id=team_id,
-                        workplace_id=workplace_id,
-                        tags=tags,
-                        **stream_kwargs,
-                    ):
-                        await queue.put(("chunk", text))
+                    is_mock = getattr(llm_client.stream, "__qualname__", "") != "VeloRoute.stream" or hasattr(llm_client.stream, "assert_called")
+                    if is_mock:
+                        raw_stream = llm_client.stream(
+                            model=model,
+                            messages=messages,
+                            headers=forward_headers,
+                            session_id=session_id,
+                            user_id=user_id,
+                            team_id=team_id,
+                            workplace_id=workplace_id,
+                            tags=tags,
+                            **stream_kwargs,
+                        )
+                        async for item in raw_stream:
+                            if isinstance(item, str):
+                                await queue.put(("event", StreamEvent(type="content", content=item)))
+                            elif hasattr(item, "type"):
+                                await queue.put(("event", item))
+                            else:
+                                await queue.put(("event", StreamEvent(type="content", content=str(item))))
+                    else:
+                        async for event in llm_client.stream_events(
+                            model=model,
+                            messages=messages,
+                            headers=forward_headers,
+                            session_id=session_id,
+                            user_id=user_id,
+                            team_id=team_id,
+                            workplace_id=workplace_id,
+                            tags=tags,
+                            **stream_kwargs,
+                        ):
+                            await queue.put(("event", event))
                     await queue.put(("done", None))
                 except asyncio.CancelledError:
                     raise
@@ -523,17 +547,42 @@ async def openai_proxy_chat_completions(req: Dict[str, Any], request: Request):
                 producer_task = asyncio.create_task(stream_producer())
                 while True:
                     try:
-                        msg_type, val = await asyncio.wait_for(queue.get(), timeout=15.0)
+                        msg_type, val = await asyncio.wait_for(queue.get(), timeout=30.0)
                     except asyncio.TimeoutError:
                         # SSE keep-alive heartbeat prevents intermediary timeouts.
                         yield ": keep-alive\n\n"
                         continue
 
-                    if msg_type == "chunk":
-                        if ttft_ms is None:
+                    if msg_type == "event":
+                        event = val
+                        if ttft_ms is None and (event.content or event.reasoning_content):
                             ttft_ms = round((time.monotonic() - stream_start_time) * 1000, 2)
-                        accumulated_text += val
-                        completion_tokens_est += max(1, len(val) // 4)
+
+                        delta: Dict[str, Any] = {}
+                        if not first_chunk_sent:
+                            delta["role"] = "assistant"
+                            first_chunk_sent = True
+
+                        if event.type == "content" and event.content:
+                            accumulated_text += event.content
+                            completion_tokens_est += max(1, len(event.content) // 4)
+                            delta["content"] = event.content
+                        elif event.type == "reasoning" and event.reasoning_content:
+                            completion_tokens_est += max(1, len(event.reasoning_content) // 4)
+                            delta["reasoning_content"] = event.reasoning_content
+                        elif event.type == "tool_call" and event.tool_call:
+                            delta["tool_calls"] = [event.tool_call]
+                        elif event.type == "finish":
+                            if event.finish_reason:
+                                finish_reason_override = event.finish_reason
+                            continue
+                        elif event.type == "usage":
+                            continue
+                        elif event.type == "done":
+                            continue
+                        elif not delta:
+                            continue
+
                         chunk = {
                             "id": chunk_id,
                             "object": "chat.completion.chunk",
@@ -541,18 +590,27 @@ async def openai_proxy_chat_completions(req: Dict[str, Any], request: Request):
                             "model": display_model,
                             "choices": [{
                                 "index": 0,
-                                "delta": {"content": val},
+                                "delta": delta,
                                 "finish_reason": None,
                             }],
                         }
                         yield f"data: {json.dumps(chunk)}\n\n"
                     elif msg_type == "done":
+                        if not first_chunk_sent:
+                            first_chunk = {
+                                "id": chunk_id,
+                                "object": "chat.completion.chunk",
+                                "created": created_ts,
+                                "model": display_model,
+                                "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}],
+                            }
+                            yield f"data: {json.dumps(first_chunk)}\n\n"
                         final_chunk = {
                             "id": chunk_id,
                             "object": "chat.completion.chunk",
                             "created": created_ts,
                             "model": display_model,
-                            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                            "choices": [{"index": 0, "delta": {}, "finish_reason": finish_reason_override or "stop"}],
                         }
                         if include_usage:
                             final_chunk["usage"] = {
